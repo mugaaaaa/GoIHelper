@@ -1,14 +1,18 @@
-import React, { useState } from 'react'
+import React from 'react'
 import { Button, Box, Typography, Paper, CircularProgress, Alert } from '@mui/material'
 import { GeminiService } from '../services/ai/GeminiService'
+import { useScreenshot } from '../context/ScreenshotContext'
+import ReactMarkdown from 'react-markdown'
 
 const API_KEY = import.meta.env.VITE_GEMINI_API_KEY;
 
 export default function ScreenshotPage(): React.JSX.Element {
-  const [image, setImage] = useState<string | null>(null)
-  const [analysis, setAnalysis] = useState<string | null>(null)
-  const [loading, setLoading] = useState(false)
-  const [error, setError] = useState<string | null>(null)
+  const { 
+    image, setImage, 
+    analysis, setAnalysis, 
+    loading, setLoading, 
+    error, setError 
+  } = useScreenshot()
 
   const handleScreenshot = async (): Promise<void> => {
     try {
@@ -44,7 +48,7 @@ export default function ScreenshotPage(): React.JSX.Element {
   }
 
   return (
-    <Box sx={{ p: 2, height: '100%', display: 'flex', flexDirection: 'column', gap: 2 }}>
+    <Box sx={{ p: 2, height: '100%', overflow: 'auto', display: 'flex', flexDirection: 'column', gap: 2 }}>
       <Typography variant="h4">Screen Shot & AI Analysis</Typography>
       
       {!API_KEY && (
@@ -53,40 +57,60 @@ export default function ScreenshotPage(): React.JSX.Element {
         </Alert>
       )}
 
-      <Box sx={{ display: 'flex', gap: 2 }}>
-        <Button variant="contained" onClick={handleScreenshot}>
-          Take Screenshot
-        </Button>
-        <Button 
-          variant="contained" 
-          color="secondary" 
-          onClick={handleAnalyze} 
-          disabled={!image || loading || !API_KEY}
+      {/* Top Section: Image + Buttons */}
+      <Box sx={{ display: 'flex', gap: 2, minHeight: '100px', alignItems: 'center' }}>
+        
+        {/* Image Preview Area */}
+        <Paper 
+          elevation={3} 
+          sx={{ 
+            width: '200px',
+            height: '100px',
+            minWidth: '200px',
+            minHeight: '100px',
+            display: 'flex', 
+            alignItems: 'center', 
+            justifyContent: 'center', 
+            bgcolor: image ? '#f5f5f5' : '#e0e0e0',
+            overflow: 'hidden',
+          }}
         >
-          {loading ? <CircularProgress size={24} /> : 'Analyze with AI'}
-        </Button>
-      </Box>
-
-      {error && <Alert severity="error">{error}</Alert>}
-
-      <Box sx={{ display: 'flex', gap: 2, flexGrow: 1, overflow: 'hidden' }}>
-        {/* Image Preview */}
-        {image && (
-          <Paper elevation={3} sx={{ p: 1, flex: 1, overflow: 'auto', display: 'flex', alignItems: 'center', justifyContent: 'center', bgcolor: '#f5f5f5' }}>
+          {image ? (
             <img src={image} alt="Screenshot" style={{ maxWidth: '100%', maxHeight: '100%', objectFit: 'contain' }} />
-          </Paper>
-        )}
+          ) : (
+            <Typography variant="body1" color="text.secondary">No Image Captured</Typography>
+          )}
+        </Paper>
 
-        {/* Analysis Result */}
-        {analysis && (
-          <Paper elevation={3} sx={{ p: 2, flex: 1, overflow: 'auto' }}>
-            <Typography variant="h6" gutterBottom>Analysis Result:</Typography>
-            <Typography variant="body1" sx={{ whiteSpace: 'pre-wrap', fontFamily: 'monospace' }}>
-              {analysis}
-            </Typography>
-          </Paper>
-        )}
+        {/* Buttons Area (Vertical) */}
+        <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2, minWidth: '200px', justifyContent: 'flex-start' }}>
+          <Button variant="contained" size="large" onClick={handleScreenshot} fullWidth>
+            Take Screenshot
+          </Button>
+          <Button 
+            variant="contained" 
+            color="secondary"
+            size="large"
+            onClick={handleAnalyze} 
+            disabled={!image || loading || !API_KEY}
+            fullWidth
+          >
+            {loading ? <CircularProgress size={24} color="inherit" /> : 'Analyze with AI'}
+          </Button>
+          
+          {error && <Alert severity="error">{error}</Alert>}
+        </Box>
       </Box>
+
+      {/* Analysis Result */}
+      {analysis && (
+        <Paper elevation={3} sx={{ p: 2, mt: 2 }}>
+          <Typography variant="h6" gutterBottom>Analysis Result:</Typography>
+          <Box sx={{ '& img': { maxWidth: '100%' } }}> 
+             <ReactMarkdown>{analysis}</ReactMarkdown>
+          </Box>
+        </Paper>
+      )}
     </Box>
   )
 }

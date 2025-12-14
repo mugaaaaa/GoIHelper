@@ -4,6 +4,7 @@ import { HashRouter, Routes, Route, Navigate } from 'react-router-dom'
 import MainLayout from './components/Layout/MainLayout'
 import ScreenshotPage from './pages/ScreenshotPage'
 import AboutPage from './pages/AboutPage'
+import { ScreenshotProvider } from './context/ScreenshotContext'
 
 const theme = createTheme({
   palette: {
@@ -22,15 +23,17 @@ const theme = createTheme({
 function App(): React.JSX.Element {
   return (
     <ThemeProvider theme={theme}>
-      <HashRouter>
-        <MainLayout>
-          <Routes>
-            <Route path="/" element={<Navigate to="/screenshot" replace />} />
-            <Route path="/screenshot" element={<ScreenshotPage />} />
-            <Route path="/about" element={<AboutPage />} />
-          </Routes>
-        </MainLayout>
-      </HashRouter>
+      <ScreenshotProvider>
+        <HashRouter>
+          <MainLayout>
+            <Routes>
+              <Route path="/" element={<Navigate to="/screenshot" replace />} />
+              <Route path="/screenshot" element={<ScreenshotPage />} />
+              <Route path="/about" element={<AboutPage />} />
+            </Routes>
+          </MainLayout>
+        </HashRouter>
+      </ScreenshotProvider>
     </ThemeProvider>
   )
 }
