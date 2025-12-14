@@ -125,6 +125,14 @@ export class DBManager {
         2. Provide a translation.
         3. Break down the sentence structure and explain key vocabulary.
       `.trim());
+
+      this.addPrompt('日语分析 (详细)', `
+        请担任我的日语学习助手。仔细分析图片中的日语文本：
+        1. 提供地道、准确的中文翻译。
+        2. 逐句解析句子结构，特别是复杂的从句或修饰关系。
+        3. 解释关键的语法点和词汇在上下文中的具体用法和细微差别。
+        4. 指出任何体现日本文化或特定语境的表达方式。
+      `.trim());
     }
 
     // Insert default vocabulary book if empty

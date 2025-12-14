@@ -171,6 +171,32 @@ export default function ScreenshotPage(): React.JSX.Element {
       
       console.log('Analysis Raw Result:', result.text); 
 
+      // Helper to robustly extract JSON array
+      const extractJsonArray = (str: string): any[] | null => {
+        try {
+          let clean = str.replace(/```json/g, '').replace(/```/g, '').trim();
+          // Try direct parse
+          try {
+             const parsed = JSON.parse(clean);
+             if (Array.isArray(parsed)) return parsed;
+          } catch (e) {
+             // Continue to substring extraction
+          }
+
+          const firstBracket = clean.indexOf('[');
+          const lastBracket = clean.lastIndexOf(']');
+          if (firstBracket !== -1 && lastBracket !== -1 && lastBracket > firstBracket) {
+            const jsonStr = clean.substring(firstBracket, lastBracket + 1);
+            const parsed = JSON.parse(jsonStr);
+            if (Array.isArray(parsed)) return parsed;
+          }
+          return null;
+        } catch (e) {
+          console.warn('JSON extraction failed for chunk:', str.substring(0, 50) + '...', e);
+          return null;
+        }
+      };
+
       // Parse result
       const grammarSplit = result.text.split('---GRAMMAR-JSON-START---');
       setAnalysis(grammarSplit[0]);
@@ -180,31 +206,21 @@ export default function ScreenshotPage(): React.JSX.Element {
         const grammarJsonStr = vocabSplit[0];
         
         // Parse Grammar
-        try {
-          const cleanGrammarJson = grammarJsonStr.replace(/```json/g, '').replace(/```/g, '').trim();
-          const grammarItems = JSON.parse(cleanGrammarJson);
-          if (Array.isArray(grammarItems)) {
-             setDetectedGrammar(grammarItems);
-          }
-        } catch (e) {
-          console.error('Failed to parse grammar JSON:', e);
+        const grammarItems = extractJsonArray(grammarJsonStr);
+        if (grammarItems) {
+           setDetectedGrammar(grammarItems);
         }
 
         if (vocabSplit[1]) {
            const vocabJsonStr = vocabSplit[1];
            // Parse Vocab
-           try {
-              const cleanVocabJson = vocabJsonStr.replace(/```json/g, '').replace(/```/g, '').trim();
-              const vocabItems = JSON.parse(cleanVocabJson);
-              if (Array.isArray(vocabItems)) {
-                const mappedWords = vocabItems.map(w => ({
-                  ...w,
-                  note: w.note || w.context
-                }));
-                setDetectedWords(mappedWords);
-              }
-           } catch (e) {
-             console.error('Failed to parse vocab JSON:', e);
+           const vocabItems = extractJsonArray(vocabJsonStr);
+           if (vocabItems) {
+              const mappedWords = vocabItems.map(w => ({
+                ...w,
+                note: w.note || w.context
+              }));
+              setDetectedWords(mappedWords);
            }
         }
       } else {
@@ -212,18 +228,13 @@ export default function ScreenshotPage(): React.JSX.Element {
         const vocabSplit = result.text.split('---VOCAB-JSON-START---');
         if (vocabSplit.length > 1) {
              setAnalysis(vocabSplit[0]);
-             try {
-                const cleanVocabJson = vocabSplit[1].replace(/```json/g, '').replace(/```/g, '').trim();
-                const vocabItems = JSON.parse(cleanVocabJson);
-                if (Array.isArray(vocabItems)) {
-                  const mappedWords = vocabItems.map(w => ({
-                    ...w,
-                    note: w.note || w.context
-                  }));
-                  setDetectedWords(mappedWords);
-                }
-             } catch (e) {
-               console.error('Failed to parse vocab JSON (fallback):', e);
+             const vocabItems = extractJsonArray(vocabSplit[1]);
+             if (vocabItems) {
+                const mappedWords = vocabItems.map(w => ({
+                  ...w,
+                  note: w.note || w.context
+                }));
+                setDetectedWords(mappedWords);
              }
         }
       }

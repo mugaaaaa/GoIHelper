@@ -9,9 +9,9 @@ import { GeminiService } from '../services/ai/GeminiService'
 import { QwenService } from '../services/ai/QwenService'
 import { DeepSeekService } from '../services/ai/DeepSeekService'
 import ReactMarkdown from 'react-markdown'
-import { Prompt, VocabularyBook } from '../../../preload/index'
+import { Prompt, VocabularyBook, GrammarBook } from '../../../preload/index'
 import { useTranslation } from 'react-i18next'
-import { DetectedWord } from '../context/ScreenshotContext' // Reusing type
+import { DetectedWord, DetectedGrammar } from '../context/ScreenshotContext' // Reusing type
 
 const VOCAB_INSTRUCTION = `
 
@@ -20,18 +20,32 @@ const VOCAB_INSTRUCTION = `
 请翻译并分析这段文本
 然后输出如下内容作为分隔符
 
----VOCAB-JSON-START---
-
-之后, 以如下方式给出每一个你选择的有记录价值的语法:
+---GRAMMAR-JSON-START---
+请以JSON数组格式输出提取的语法点 (Grammar Items):
 [
-  {"word": "～ようとしている", "reading": "～ようとしている", "meaning": "含义：表示正试图做某事，或某个动作即将发生。这里表示“正拼命地试图...”。", "note": "结构：动词意志形 + としている\n含义：表示正试图做某事，或某个动作即将发生。这里表示“正拼命地试图...”。\n例句：必死にやり過ごそうとしている。（正拼命地试图熬过去/忽略掉。）"}
+  {
+    "grammar": "语法点 (e.g. ～ようとしている)",
+    "reading": "读音 (e.g. ～ようとしている)",
+    "structure": "接续/结构 (e.g. 动词意志形 + としている)",
+    "meaning": "意义 (e.g. 表示正试图做某事...)",
+    "context": "上下文分析 (e.g. 这里表示...)",
+    "examples": "例句 (e.g. 必死に...)",
+    "note": "笔记 (Optional)"
+  }
 ]
 
-之后, 以如下方式给出每一个生词:
+---VOCAB-JSON-START---
+请以JSON数组格式输出提取的生词 (Vocabulary Words):
 [
-  {"word": "呟く", "reading": "つぶやく", "meaning": "一个人喃喃自语, 碎碎念", "note": "自らの事情を呟きかけ慌てて誤魔化していたり（自言自语后慌忙掩饰）"}
+  {
+    "word": "单词 (e.g. 呟く)",
+    "reading": "读音 (e.g. つぶやく)",
+    "meaning": "意义 (e.g. 一个人喃喃自语...)",
+    "note": "笔记/例句 (e.g. 自らの事情を...)"
+  }
 ]
 `;
+
 
 export default function TextAnalysisPage(): React.JSX.Element {
   const { t } = useTranslation()
@@ -43,9 +57,14 @@ export default function TextAnalysisPage(): React.JSX.Element {
     const saved = sessionStorage.getItem('text_analysis_words');
     return saved ? JSON.parse(saved) : [];
   });
+  const [detectedGrammar, setDetectedGrammar] = useState<DetectedGrammar[]>(() => {
+    const saved = sessionStorage.getItem('text_analysis_grammar');
+    return saved ? JSON.parse(saved) : [];
+  });
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [addedWords, setAddedWords] = useState<Set<string>>(new Set());
+  const [addedGrammar, setAddedGrammar] = useState<Set<string>>(new Set());
 
   // Save state to sessionStorage
   useEffect(() => {
@@ -63,12 +82,18 @@ export default function TextAnalysisPage(): React.JSX.Element {
   useEffect(() => {
     sessionStorage.setItem('text_analysis_words', JSON.stringify(detectedWords));
   }, [detectedWords]);
+
+  useEffect(() => {
+    sessionStorage.setItem('text_analysis_grammar', JSON.stringify(detectedGrammar));
+  }, [detectedGrammar]);
   
   const [prompts, setPrompts] = useState<Prompt[]>([]);
   const [selectedPromptId, setSelectedPromptId] = useState<number | ''>('');
   
   const [vocabBooks, setVocabBooks] = useState<VocabularyBook[]>([]);
+  const [grammarBooks, setGrammarBooks] = useState<GrammarBook[]>([]);
   const [defaultBookId, setDefaultBookId] = useState<number | ''>('');
+  const [defaultGrammarBookId, setDefaultGrammarBookId] = useState<number | ''>('');
 
   // Manual Add Dialog State
   const [manualDialogOpen, setManualDialogOpen] = useState(false);
@@ -103,9 +128,10 @@ export default function TextAnalysisPage(): React.JSX.Element {
         const storedModel = localStorage.getItem('selected_text_model');
         if (storedModel) setSelectedModel(storedModel);
 
-        const [promptsData, booksData] = await Promise.all([
+        const [promptsData, booksData, grammarBooksData] = await Promise.all([
           window.api.getPrompts(),
-          window.api.getBooks()
+          window.api.getBooks(),
+          window.api.getGrammarBooks()
         ]);
         
         setPrompts(promptsData);
@@ -113,6 +139,9 @@ export default function TextAnalysisPage(): React.JSX.Element {
 
         setVocabBooks(booksData);
         if (booksData.length > 0) setDefaultBookId(booksData[0].id);
+
+        setGrammarBooks(grammarBooksData);
+        if (grammarBooksData.length > 0) setDefaultGrammarBookId(grammarBooksData[0].id);
 
       } catch (error) {
         console.error('Failed to fetch initial data:', error);
@@ -140,7 +169,9 @@ export default function TextAnalysisPage(): React.JSX.Element {
     setLoading(true)
     setError(null)
     setDetectedWords([])
+    setDetectedGrammar([])
     setAddedWords(new Set())
+    setAddedGrammar(new Set())
     
     try {
       const selectedPrompt = prompts.find(p => p.id === selectedPromptId);
@@ -164,23 +195,73 @@ export default function TextAnalysisPage(): React.JSX.Element {
       
       console.log('Analysis Raw Result:', result.text); 
 
-      const parts = result.text.split('---VOCAB-JSON-START---');
-      setAnalysis(parts[0]);
-
-      if (parts[1]) {
+      // Helper to robustly extract JSON array
+      const extractJsonArray = (str: string): any[] | null => {
         try {
-          // Clean JSON string
-          const jsonStr = parts[1].replace(/```json/g, '').replace(/```/g, '').trim();
-          const words = JSON.parse(jsonStr);
-          if (Array.isArray(words)) {
-            const mappedWords = words.map(w => ({
-              ...w,
-              note: w.note || w.context
-            }));
-            setDetectedWords(mappedWords);
+          let clean = str.replace(/```json/g, '').replace(/```/g, '').trim();
+          // Try direct parse
+          try {
+             const parsed = JSON.parse(clean);
+             if (Array.isArray(parsed)) return parsed;
+          } catch (e) {
+             // Continue to substring extraction
           }
+
+          const firstBracket = clean.indexOf('[');
+          const lastBracket = clean.lastIndexOf(']');
+          if (firstBracket !== -1 && lastBracket !== -1 && lastBracket > firstBracket) {
+            const jsonStr = clean.substring(firstBracket, lastBracket + 1);
+            const parsed = JSON.parse(jsonStr);
+            if (Array.isArray(parsed)) return parsed;
+          }
+          return null;
         } catch (e) {
-          console.error('Failed to parse vocabulary JSON:', e);
+          console.warn('JSON extraction failed for chunk:', str.substring(0, 50) + '...', e);
+          return null;
+        }
+      };
+
+      // Parse result
+      const grammarSplit = result.text.split('---GRAMMAR-JSON-START---');
+      setAnalysis(grammarSplit[0]);
+
+      if (grammarSplit[1]) {
+        const vocabSplit = grammarSplit[1].split('---VOCAB-JSON-START---');
+        const grammarJsonStr = vocabSplit[0];
+        
+        // Parse Grammar
+        const grammarItems = extractJsonArray(grammarJsonStr);
+        if (grammarItems) {
+           setDetectedGrammar(grammarItems);
+        }
+
+        if (vocabSplit[1]) {
+           const vocabJsonStr = vocabSplit[1];
+           // Parse Vocab
+           const vocabItems = extractJsonArray(vocabJsonStr);
+           if (vocabItems) {
+              const mappedWords = vocabItems.map(w => ({
+                ...w,
+                note: w.note || w.context
+              }));
+              setDetectedWords(mappedWords);
+           }
+        }
+      } else {
+        // Fallback for old format
+        const parts = result.text.split('---VOCAB-JSON-START---');
+        if (parts.length > 1) {
+             setAnalysis(parts[0]);
+             const vocabItems = extractJsonArray(parts[1]);
+             if (vocabItems) {
+                const mappedWords = vocabItems.map(w => ({
+                  ...w,
+                  note: w.note || w.context
+                }));
+                setDetectedWords(mappedWords);
+             }
+        } else {
+             setAnalysis(result.text);
         }
       }
 
@@ -196,6 +277,25 @@ export default function TextAnalysisPage(): React.JSX.Element {
     try {
       await window.api.addWord(bookId, word.word, word.reading, word.meaning, word.note);
       setAddedWords(prev => new Set(prev).add(word.word));
+    } catch (e) {
+      console.error(e);
+      setError(t('screenshot.errorAddFailed'));
+    }
+  }
+
+  const handleQuickAddGrammar = async (item: DetectedGrammar, bookId: number) => {
+    try {
+      await window.api.addGrammarItem(
+        bookId, 
+        item.grammar, 
+        item.reading, 
+        item.structure, 
+        item.meaning, 
+        item.context, 
+        item.examples, 
+        item.note
+      );
+      setAddedGrammar(prev => new Set(prev).add(item.grammar));
     } catch (e) {
       console.error(e);
       setError(t('screenshot.errorAddFailed'));
@@ -327,6 +427,66 @@ export default function TextAnalysisPage(): React.JSX.Element {
                  <ReactMarkdown>{analysis}</ReactMarkdown>
               </Box>
             </Paper>
+          )}
+
+          {/* Detected Grammar */}
+          {detectedGrammar.length > 0 && (
+            <Box sx={{ mt: 2 }}>
+              <Typography variant="h6" gutterBottom>{t('grammar.item')}</Typography>
+              <Grid container spacing={2}>
+                {detectedGrammar.map((item, index) => (
+                  // @ts-ignore
+                  <Grid item xs={12} key={index}>
+                    <Card variant="outlined">
+                      <CardContent>
+                        <Typography variant="h6" component="div" color="primary">
+                          {item.grammar}
+                        </Typography>
+                        <Typography sx={{ mb: 1 }} color="text.secondary">
+                          {item.reading}
+                        </Typography>
+                        <Typography variant="body1" sx={{ fontWeight: 'bold' }}>
+                          {item.meaning}
+                        </Typography>
+                        {item.structure && (
+                          <Typography variant="body2" sx={{ mt: 1 }}>
+                            <strong>{t('grammar.structure')}:</strong> {item.structure}
+                          </Typography>
+                        )}
+                        {item.context && (
+                          <Typography variant="body2" sx={{ mt: 1 }}>
+                            <strong>{t('grammar.context')}:</strong> {item.context}
+                          </Typography>
+                        )}
+                        {item.examples && (
+                          <Box sx={{ mt: 1, bgcolor: '#f5f5f5', p: 1, borderRadius: 1 }}>
+                            <Typography variant="caption" display="block" color="text.secondary">{t('grammar.examples')}</Typography>
+                            <Typography variant="body2" sx={{ whiteSpace: 'pre-wrap' }}>{item.examples}</Typography>
+                          </Box>
+                        )}
+                      </CardContent>
+                      <CardActions>
+                        <Select 
+                          size="small" 
+                          value={defaultGrammarBookId} 
+                          onChange={(e) => setDefaultGrammarBookId(Number(e.target.value))}
+                          sx={{ minWidth: 120, mr: 1 }}
+                        >
+                          {grammarBooks.map(b => <MenuItem key={b.id} value={b.id}>{b.name}</MenuItem>)}
+                        </Select>
+                        <Button 
+                          size="small" 
+                          onClick={() => defaultGrammarBookId && handleQuickAddGrammar(item, defaultGrammarBookId as number)}
+                          disabled={addedGrammar.has(item.grammar)}
+                        >
+                          {addedGrammar.has(item.grammar) ? t('common.added') : t('common.add')}
+                        </Button>
+                      </CardActions>
+                    </Card>
+                  </Grid>
+                ))}
+              </Grid>
+            </Box>
           )}
 
           {/* Detected Vocabulary */}
