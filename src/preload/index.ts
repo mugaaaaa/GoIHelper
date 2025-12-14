@@ -1,6 +1,29 @@
 import { contextBridge, ipcRenderer } from 'electron'
 import { electronAPI } from '@electron-toolkit/preload'
 
+export interface Prompt {
+  id: number;
+  name: string;
+  content: string;
+}
+
+export interface VocabularyBook {
+  id: number;
+  name: string;
+  description?: string;
+  created_at: string;
+}
+
+export interface VocabularyWord {
+  id: number;
+  book_id: number;
+  word: string;
+  reading?: string;
+  meaning?: string;
+  note?: string;
+  created_at: string;
+}
+
 // Custom APIs for renderer
 const api = {
   getPrompts: () => ipcRenderer.invoke('get-prompts'),
@@ -14,7 +37,16 @@ const api = {
   deleteBook: (id: number) => ipcRenderer.invoke('delete-book', id),
   getWords: (bookId: number) => ipcRenderer.invoke('get-words', bookId),
   addWord: (bookId: number, word: string, reading?: string, meaning?: string, note?: string) => ipcRenderer.invoke('add-word', bookId, word, reading, meaning, note),
+  updateWord: (id: number, word: string, reading?: string, meaning?: string, note?: string) => ipcRenderer.invoke('update-word', id, word, reading, meaning, note),
   deleteWord: (id: number) => ipcRenderer.invoke('delete-word', id),
+  setProxy: (port: string) => ipcRenderer.invoke('set-proxy', port),
+  analyzeImageQwen: (apiKey: string, model: string, prompt: string, imageBase64: string) => ipcRenderer.invoke('analyze-image-qwen', apiKey, model, prompt, imageBase64),
+  setGlobalShortcut: (shortcut: string) => ipcRenderer.invoke('set-global-shortcut', shortcut),
+  onAutoAnalyzeScreenshot: (callback: (image: string) => void) => {
+    const listener = (_event: any, image: string) => callback(image);
+    ipcRenderer.on('auto-analyze-screenshot', listener);
+    return () => ipcRenderer.removeListener('auto-analyze-screenshot', listener);
+  }
 }
 
 // Use `contextBridge` APIs to expose Electron APIs to

@@ -140,6 +140,11 @@ export class DBManager {
     return info.lastInsertRowid as number;
   }
 
+  updateWord(id: number, word: string, reading?: string, meaning?: string, note?: string): void {
+    const stmt = this.db.prepare('UPDATE vocabulary SET word = ?, reading = ?, meaning = ?, note = ? WHERE id = ?');
+    stmt.run(word, reading || null, meaning || null, note || null, id);
+  }
+
   deleteWord(id: number): void {
     const stmt = this.db.prepare('DELETE FROM vocabulary WHERE id = ?');
     stmt.run(id);

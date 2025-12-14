@@ -1,11 +1,14 @@
-import { app, shell, BrowserWindow, ipcMain, desktopCapturer } from 'electron'
+import { app, shell, BrowserWindow, ipcMain, desktopCapturer, globalShortcut } from 'electron'
 import { join } from 'path'
 import { electronApp, optimizer, is } from '@electron-toolkit/utils'
 import icon from '../../resources/icon.png?asset'
 import { DBManager } from './db'
+import axios from 'axios'
+import { HttpsProxyAgent } from 'https-proxy-agent'
 
 let win: BrowserWindow | null = null
 let db: DBManager | null = null;
+let currentProxyPort: string | null = null;
 
 function createWindow(): void {
   // Create the browser window.
@@ -128,8 +131,110 @@ app.whenReady().then(() => {
     return db?.addWord(bookId, word, reading, meaning, note);
   });
 
+  ipcMain.handle('update-word', (_, id: number, word: string, reading?: string, meaning?: string, note?: string) => {
+    return db?.updateWord(id, word, reading, meaning, note);
+  });
+
   ipcMain.handle('delete-word', (_, id: number) => {
     return db?.deleteWord(id);
+  });
+
+  ipcMain.handle('set-proxy', async (_, port: string) => {
+    currentProxyPort = port;
+    if (win) {
+      const proxyRules = port ? `http=127.0.0.1:${port};https=127.0.0.1:${port}` : '';
+      await win.webContents.session.setProxy({ proxyRules });
+    }
+  });
+
+  ipcMain.handle('analyze-image-qwen', async (_, apiKey: string, model: string, prompt: string, imageBase64: string) => {
+    try {
+      const agent = currentProxyPort ? new HttpsProxyAgent(`http://127.0.0.1:${currentProxyPort}`) : undefined;
+      
+      let dataUri = imageBase64;
+      if (!imageBase64.startsWith('data:')) {
+        dataUri = `data:image/png;base64,${imageBase64}`;
+      }
+
+      const response = await axios.post(
+        'https://dashscope.aliyuncs.com/compatible-mode/v1/chat/completions',
+        {
+          model: model,
+          messages: [
+            {
+              role: "user",
+              content: [
+                { type: "text", text: prompt },
+                { type: "image_url", image_url: { url: dataUri } }
+              ]
+            }
+          ]
+        },
+        {
+          headers: {
+            'Authorization': `Bearer ${apiKey}`,
+            'Content-Type': 'application/json'
+          },
+          httpsAgent: agent,
+          proxy: false // Important for axios with custom agent
+        }
+      );
+
+      return { text: response.data.choices[0].message.content, raw: response.data };
+    } catch (error: any) {
+      console.error('Qwen Analysis Failed (Main Process):', error.message);
+      if (error.response) {
+        console.error('Data:', JSON.stringify(error.response.data));
+        throw new Error(`API Error: ${error.response.status} - ${JSON.stringify(error.response.data)}`);
+      }
+      throw error;
+    }
+  });
+
+  // Register global shortcut handler
+  ipcMain.handle('set-global-shortcut', (_, shortcut: string) => {
+    // Unregister existing shortcuts to avoid conflicts or duplicates
+    globalShortcut.unregisterAll();
+    
+    if (!shortcut) return true; // Just unregister if empty
+
+    try {
+      const ret = globalShortcut.register(shortcut, async () => {
+        if (win) {
+          if (win.isMinimized()) win.restore();
+          win.focus();
+          
+          // Take screenshot
+          win.hide(); // Briefly hide to take screenshot
+          setTimeout(async () => {
+              try {
+                  const sources = await desktopCapturer.getSources({
+                      types: ['screen'],
+                      thumbnailSize: { width: 1920, height: 1080 }
+                  });
+                  if (win) {
+                      win.show();
+                      const image = sources[0].thumbnail.toDataURL();
+                      win.webContents.send('auto-analyze-screenshot', image);
+                  }
+              } catch (e) {
+                  console.error('Failed to take screenshot via shortcut:', e);
+                  if (win) win.show();
+              }
+          }, 300); // Wait for hide animation
+        }
+      });
+
+      if (!ret) {
+        console.error('Registration failed for shortcut:', shortcut);
+        return false;
+      }
+      console.log('Global shortcut registered:', shortcut);
+      return true;
+    } catch (error) {
+      console.error('Error registering shortcut:', error);
+      return false;
+    }
   });
 
   createWindow()

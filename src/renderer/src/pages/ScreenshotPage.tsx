@@ -2,15 +2,16 @@ import React, { useEffect, useState } from 'react'
 import { 
   Button, Box, Typography, Paper, CircularProgress, Alert, MenuItem, Select, InputLabel, FormControl,
   Card, CardContent, CardActions, Grid, Dialog, DialogTitle, DialogContent, DialogActions, TextField,
-  Divider, Chip
+  Link
 } from '@mui/material'
+import { Link as RouterLink, useLocation } from 'react-router-dom'
 import { GeminiService } from '../services/ai/GeminiService'
+import { QwenService } from '../services/ai/QwenService'
+
 import { useScreenshot, DetectedWord } from '../context/ScreenshotContext'
 import ReactMarkdown from 'react-markdown'
 import { Prompt, VocabularyBook } from '../../../preload/index'
 import { useTranslation } from 'react-i18next'
-
-const API_KEY = import.meta.env.VITE_GEMINI_API_KEY;
 
 const VOCAB_INSTRUCTION = `
 
@@ -33,6 +34,7 @@ Example:
 
 export default function ScreenshotPage(): React.JSX.Element {
   const { t } = useTranslation()
+  const location = useLocation()
   const { 
     image, setImage, 
     analysis, setAnalysis, 
@@ -52,10 +54,42 @@ export default function ScreenshotPage(): React.JSX.Element {
   const [manualData, setManualData] = useState({ 
     word: '', reading: '', meaning: '', note: '', bookId: '' as number | '' 
   });
+  
+  // API Key state
+  const [apiKey, setApiKey] = useState<string>('');
+  const [qwenKey, setQwenKey] = useState<string>('');
+  const [selectedModel, setSelectedModel] = useState<string>('gemini-2.5-flash');
+
+  // Trigger analysis if navigated with state
+  useEffect(() => {
+    if (location.state && (location.state as any).autoAnalyze && image && !loading) {
+       // Need to ensure keys and prompts are loaded before analyzing
+       // But initData runs in another effect. 
+       // We can just call handleAnalyze() but we need dependencies.
+       // A cleaner way is to detect if image changed and we have the auto flag.
+       // However, image is already set.
+       
+       // Let's wait for initData to complete by checking prompts.length or key presence
+       if (prompts.length > 0 && ((selectedModel.includes('gemini') && apiKey) || (!selectedModel.includes('gemini') && qwenKey))) {
+          // Clear the state to prevent loop
+          window.history.replaceState({}, document.title);
+          handleAnalyze();
+       }
+    }
+  }, [location.state, image, prompts, apiKey, qwenKey, selectedModel]);
 
   useEffect(() => {
     const initData = async () => {
       try {
+        const storedKey = localStorage.getItem('gemini_api_key');
+        if (storedKey) setApiKey(storedKey);
+
+        const storedQwenKey = localStorage.getItem('qwen_api_key');
+        if (storedQwenKey) setQwenKey(storedQwenKey);
+
+        const storedModel = localStorage.getItem('selected_model');
+        if (storedModel) setSelectedModel(storedModel);
+
         const [promptsData, booksData] = await Promise.all([
           window.api.getPrompts(),
           window.api.getBooks()
@@ -89,7 +123,11 @@ export default function ScreenshotPage(): React.JSX.Element {
   }
 
   const handleAnalyze = async (): Promise<void> => {
-    if (!image || !API_KEY) {
+    // Check for appropriate key based on model
+    const isGemini = selectedModel.includes('gemini');
+    const hasKey = isGemini ? !!apiKey : !!qwenKey;
+
+    if (!image || !hasKey) {
       setError(t('screenshot.errorNoImage'))
       return
     }
@@ -102,10 +140,16 @@ export default function ScreenshotPage(): React.JSX.Element {
       const selectedPrompt = prompts.find(p => p.id === selectedPromptId);
       const promptText = (selectedPrompt ? selectedPrompt.content : '') + VOCAB_INSTRUCTION;
 
-      const service = new GeminiService(API_KEY)
+      let service;
+      if (isGemini) {
+        service = new GeminiService(apiKey);
+      } else {
+        service = new QwenService(qwenKey, selectedModel);
+      }
+
       const result = await service.analyzeImage(image, promptText)
       
-      console.log('Gemini Raw Result:', result.text); // Debug Log
+      console.log('Analysis Raw Result:', result.text); // Debug Log
 
       const parts = result.text.split('---VOCAB-JSON-START---');
       setAnalysis(parts[0]);
@@ -182,8 +226,12 @@ export default function ScreenshotPage(): React.JSX.Element {
     <Box sx={{ p: 2, height: '100%', overflow: 'auto', display: 'flex', flexDirection: 'column', gap: 2 }}>
       <Typography variant="h4">{t('sidebar.screenshot')} & {t('sidebar.aianalysis')}</Typography>
       
-      {!API_KEY && (
-        <Alert severity="warning">{t('screenshot.warningKeyMissing')}</Alert>
+      {/* Warning if key is missing for selected model */}
+      {((selectedModel.includes('gemini') && !apiKey) || (!selectedModel.includes('gemini') && !qwenKey)) && (
+        <Alert severity="warning">
+          {selectedModel.includes('gemini') ? t('screenshot.warningKeyMissing') : t('settings.qwenKey') + ' Missing'} 
+          <Link component={RouterLink} to="/settings" sx={{ ml: 1 }}>{t('sidebar.settings')}</Link>
+        </Alert>
       )}
 
       {/* Top Section */}
@@ -200,7 +248,7 @@ export default function ScreenshotPage(): React.JSX.Element {
               {prompts.map((prompt) => <MenuItem key={prompt.id} value={prompt.id}>{prompt.name}</MenuItem>)}
             </Select>
           </FormControl>
-          <Button variant="contained" color="secondary" size="large" onClick={handleAnalyze} disabled={!image || loading || !API_KEY} fullWidth>
+          <Button variant="contained" color="secondary" size="large" onClick={handleAnalyze} disabled={!image || loading || (selectedModel.includes('gemini') ? !apiKey : !qwenKey)} fullWidth>
             {loading ? <CircularProgress size={24} color="inherit" /> : t('screenshot.analyze')}
           </Button>
           {error && <Alert severity="error">{error}</Alert>}
@@ -229,6 +277,7 @@ export default function ScreenshotPage(): React.JSX.Element {
           <Typography variant="h6" gutterBottom>{t('screenshot.detectedVocabulary')}</Typography>
           <Grid container spacing={2}>
             {detectedWords.map((word, index) => (
+              // @ts-ignore
               <Grid item xs={12} sm={6} md={4} key={index}>
                 <Card variant="outlined" sx={{ height: '100%', display: 'flex', flexDirection: 'column' }}>
                   <CardContent sx={{ flexGrow: 1 }}>

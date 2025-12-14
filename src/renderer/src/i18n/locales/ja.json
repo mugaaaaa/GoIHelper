@@ -9,8 +9,17 @@
   },
   "settings": {
     "title": "設定",
+    "general": "一般設定",
     "language": "言語",
-    "selectLanguage": "言語を選択"
+    "selectLanguage": "言語を選択",
+    "aiModel": "AIモデル設定",
+    "selectModel": "AIモデルを選択",
+    "geminiKey": "Gemini API キー",
+    "qwenKey": "Qwen API キー (Aliyun)",
+    "proxyPort": "プロキシポート",
+    "proxyPortHelper": "デフォルト: 7897",
+    "saveSuccess": "設定を保存しました。",
+    "saveError": "設定の保存に失敗しました。"
   },
   "common": {
     "add": "追加",

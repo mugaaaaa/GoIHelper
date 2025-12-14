@@ -37,7 +37,12 @@ declare global {
       deleteBook: (id: number) => Promise<void>
       getWords: (bookId: number) => Promise<VocabularyWord[]>
       addWord: (bookId: number, word: string, reading?: string, meaning?: string, note?: string) => Promise<number>
+      updateWord: (id: number, word: string, reading?: string, meaning?: string, note?: string) => Promise<void>
       deleteWord: (id: number) => Promise<void>
+      setProxy: (port: string) => Promise<void>
+      analyzeImageQwen: (apiKey: string, model: string, prompt: string, imageBase64: string) => Promise<{ text: string, raw: any }>
+      setGlobalShortcut: (shortcut: string) => Promise<boolean>
+      onAutoAnalyzeScreenshot: (callback: (image: string) => void) => () => void
     }
     electronAPI: {
       minimize: () => void

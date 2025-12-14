@@ -9,8 +9,17 @@
   },
   "settings": {
     "title": "Settings",
+    "general": "General Settings",
     "language": "Language",
-    "selectLanguage": "Select Language"
+    "selectLanguage": "Select Language",
+    "aiModel": "AI Model Settings",
+    "selectModel": "Select AI Model",
+    "geminiKey": "Gemini API Key",
+    "qwenKey": "Qwen API Key (Aliyun)",
+    "proxyPort": "Proxy Port",
+    "proxyPortHelper": "Default: 7897",
+    "saveSuccess": "Settings saved successfully.",
+    "saveError": "Failed to save settings."
   },
   "common": {
     "add": "Add",
