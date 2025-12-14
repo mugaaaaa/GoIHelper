@@ -2,8 +2,10 @@ import { app, shell, BrowserWindow, ipcMain, desktopCapturer } from 'electron'
 import { join } from 'path'
 import { electronApp, optimizer, is } from '@electron-toolkit/utils'
 import icon from '../../resources/icon.png?asset'
+import { DBManager } from './db'
 
 let win: BrowserWindow | null = null
+let db: DBManager | null = null;
 
 function createWindow(): void {
   // Create the browser window.
@@ -53,6 +55,9 @@ function createWindow(): void {
 app.whenReady().then(() => {
   // Set app user model id for windows
   electronApp.setAppUserModelId('com.electron')
+  
+  // Initialize Database
+  db = new DBManager();
 
   // Default open or close DevTools by F12 in development
   // and ignore CommandOrControl + R in production.
@@ -65,12 +70,42 @@ app.whenReady().then(() => {
   ipcMain.on('ping', () => console.log('pong'))
 
   ipcMain.handle('screen-shot', async () => {
+    // Hide window if it exists
+    if (win) {
+      win.hide()
+      // Wait a bit for the window to disappear (animation etc)
+      await new Promise(resolve => setTimeout(resolve, 500))
+    }
+
     const sources = await desktopCapturer.getSources({
       types: ['screen'],
       thumbnailSize: { width: 1920, height: 1080 }
     })
+    
+    // Show window again
+    if (win) {
+      win.show()
+    }
+
     return sources[0].thumbnail.toDataURL()
   })
+
+  // Prompt IPC Handlers
+  ipcMain.handle('get-prompts', () => {
+    return db?.getAllPrompts() || [];
+  });
+
+  ipcMain.handle('add-prompt', (_, name: string, content: string) => {
+    return db?.addPrompt(name, content);
+  });
+
+  ipcMain.handle('update-prompt', (_, id: number, name: string, content: string) => {
+    return db?.updatePrompt(id, name, content);
+  });
+
+  ipcMain.handle('delete-prompt', (_, id: number) => {
+    return db?.deletePrompt(id);
+  });
 
   createWindow()
 

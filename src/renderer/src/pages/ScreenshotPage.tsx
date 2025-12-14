@@ -1,8 +1,9 @@
-import React from 'react'
-import { Button, Box, Typography, Paper, CircularProgress, Alert } from '@mui/material'
+import React, { useEffect, useState } from 'react'
+import { Button, Box, Typography, Paper, CircularProgress, Alert, MenuItem, Select, InputLabel, FormControl } from '@mui/material'
 import { GeminiService } from '../services/ai/GeminiService'
 import { useScreenshot } from '../context/ScreenshotContext'
 import ReactMarkdown from 'react-markdown'
+import { Prompt } from '../../../preload/index'
 
 const API_KEY = import.meta.env.VITE_GEMINI_API_KEY;
 
@@ -13,6 +14,24 @@ export default function ScreenshotPage(): React.JSX.Element {
     loading, setLoading, 
     error, setError 
   } = useScreenshot()
+
+  const [prompts, setPrompts] = useState<Prompt[]>([]);
+  const [selectedPromptId, setSelectedPromptId] = useState<number | ''>('');
+
+  useEffect(() => {
+    const fetchPrompts = async () => {
+      try {
+        const data = await window.api.getPrompts();
+        setPrompts(data);
+        if (data.length > 0) {
+          setSelectedPromptId(data[0].id);
+        }
+      } catch (error) {
+        console.error('Failed to fetch prompts:', error);
+      }
+    };
+    fetchPrompts();
+  }, []);
 
   const handleScreenshot = async (): Promise<void> => {
     try {
@@ -36,8 +55,11 @@ export default function ScreenshotPage(): React.JSX.Element {
     setLoading(true)
     setError(null)
     try {
+      const selectedPrompt = prompts.find(p => p.id === selectedPromptId);
+      const promptText = selectedPrompt ? selectedPrompt.content : undefined;
+
       const service = new GeminiService(API_KEY)
-      const result = await service.analyzeImage(image)
+      const result = await service.analyzeImage(image, promptText)
       setAnalysis(result.text)
     } catch (err) {
       console.error(err)
@@ -58,7 +80,7 @@ export default function ScreenshotPage(): React.JSX.Element {
       )}
 
       {/* Top Section: Image + Buttons */}
-      <Box sx={{ display: 'flex', gap: 2, minHeight: '100px', alignItems: 'center' }}>
+      <Box sx={{ display: 'flex', gap: 2, minHeight: '100px', alignItems: 'flex-start' }}>
         
         {/* Image Preview Area */}
         <Paper 
@@ -87,6 +109,24 @@ export default function ScreenshotPage(): React.JSX.Element {
           <Button variant="contained" size="large" onClick={handleScreenshot} fullWidth>
             Take Screenshot
           </Button>
+
+          <FormControl fullWidth size="small">
+            <InputLabel id="prompt-select-label">Prompt</InputLabel>
+            <Select
+              labelId="prompt-select-label"
+              id="prompt-select"
+              value={selectedPromptId}
+              label="Prompt"
+              onChange={(e) => setSelectedPromptId(Number(e.target.value))}
+            >
+              {prompts.map((prompt) => (
+                <MenuItem key={prompt.id} value={prompt.id}>
+                  {prompt.name}
+                </MenuItem>
+              ))}
+            </Select>
+          </FormControl>
+
           <Button 
             variant="contained" 
             color="secondary"
@@ -104,8 +144,19 @@ export default function ScreenshotPage(): React.JSX.Element {
 
       {/* Analysis Result */}
       {analysis && (
-        <Paper elevation={3} sx={{ p: 2, mt: 2 }}>
-          <Typography variant="h6" gutterBottom>Analysis Result:</Typography>
+        <Paper elevation={3} sx={{ p: 2, mt: 2, position: 'relative' }}>
+          <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 2 }}>
+            <Typography variant="h6">Analysis Result:</Typography>
+            <Button 
+              variant="outlined" 
+              size="small" 
+              onClick={() => {
+                navigator.clipboard.writeText(analysis)
+              }}
+            >
+              Copy Markdown
+            </Button>
+          </Box>
           <Box sx={{ '& img': { maxWidth: '100%' } }}> 
              <ReactMarkdown>{analysis}</ReactMarkdown>
           </Box>

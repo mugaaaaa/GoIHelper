@@ -13,11 +13,13 @@ import { useNavigate } from 'react-router-dom'
 
 import CameraIcon from '@mui/icons-material/CameraAlt'
 import BookIcon from '@mui/icons-material/Book'
+import SettingsIcon from '@mui/icons-material/Settings'
 
 const DRAW_WIDTH = 240
 
 const MENU_ITEMS = [
   { text: 'Screen Shot', icon: <CameraIcon />, path: '/screenshot' },
+  { text: 'Prompts', icon: <SettingsIcon />, path: '/prompts' },
   { text: 'About', icon: <BookIcon />, path: '/about' }
 ]
 
