@@ -1,0 +1,69 @@
+{
+  "sidebar": {
+    "screenshot": "スクリーンショット",
+    "aianalysis": "AI解析",
+    "vocabulary": "単語帳",
+    "prompts": "プロンプト",
+    "settings": "設定",
+    "about": "アバウト"
+  },
+  "settings": {
+    "title": "設定",
+    "language": "言語",
+    "selectLanguage": "言語を選択"
+  },
+  "common": {
+    "add": "追加",
+    "delete": "削除",
+    "cancel": "キャンセル",
+    "save": "保存",
+    "edit": "編集",
+    "create": "作成"
+  },
+  "screenshot": {
+    "analyze": "解析",
+    "analyzing": "解析中...",
+    "copyMarkdown": "Markdownをコピー",
+    "analysisResult": "解析結果",
+    "detectedVocabulary": "検出された単語",
+    "manualAdd": "手動追加",
+    "selectPrompt": "プロンプト選択",
+    "selectBook": "単語帳選択",
+    "imagePreview": "画像プレビュー",
+    "errorNoImage": "解析する画像がないか、APIキーが不足しています。",
+    "errorAnalysisFailed": "解析に失敗しました。APIキーと接続を確認してください。",
+    "errorCaptureFailed": "スクリーンショットの取得に失敗しました。",
+    "errorAddFailed": "単語の追加に失敗しました。",
+    "errorSaveFailed": "単語の保存に失敗しました。",
+    "warningKeyMissing": "Gemini APIキーが不足しています。",
+    "word": "単語",
+    "reading": "読み方",
+    "meaning": "意味",
+    "note": "ノート"
+  },
+  "vocabulary": {
+    "books": "単語帳一覧",
+    "createBook": "単語帳作成",
+    "bookName": "単語帳名",
+    "description": "説明",
+    "noWords": "この単語帳にはまだ単語がありません。",
+    "selectBook": "単語帳を選択してください",
+    "createNewBookTitle": "新しい単語帳を作成",
+    "deleteBookConfirm": "この単語帳を削除してもよろしいですか？含まれるすべての単語が失われます。",
+    "note": "ノート:",
+    "addedDate": "追加日:"
+  },
+  "prompts": {
+    "title": "プロンプト管理",
+    "newPrompt": "新規プロンプト",
+    "editPrompt": "プロンプト編集",
+    "promptName": "プロンプト名",
+    "promptContent": "プロンプト内容",
+    "noPrompts": "プロンプトが見つかりません。作成してください！",
+    "deleteConfirm": "このプロンプトを削除してもよろしいですか？"
+  },
+  "about": {
+    "title": "アバウト",
+    "description": "これは GoIHelper アプリケーションです。"
+  }
+}

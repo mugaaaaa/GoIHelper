@@ -1,0 +1,69 @@
+{
+  "sidebar": {
+    "screenshot": "屏幕截图",
+    "aianalysis": "AI解析",
+    "vocabulary": "生词本",
+    "prompts": "提示词",
+    "settings": "设置",
+    "about": "关于"
+  },
+  "settings": {
+    "title": "设置",
+    "language": "语言",
+    "selectLanguage": "选择语言"
+  },
+  "common": {
+    "add": "添加",
+    "delete": "删除",
+    "cancel": "取消",
+    "save": "保存",
+    "edit": "编辑",
+    "create": "创建"
+  },
+  "screenshot": {
+    "analyze": "解析",
+    "analyzing": "解析中...",
+    "copyMarkdown": "复制 Markdown",
+    "analysisResult": "解析结果",
+    "detectedVocabulary": "检测到的生词",
+    "manualAdd": "手动添加",
+    "selectPrompt": "选择提示词",
+    "selectBook": "选择生词本",
+    "imagePreview": "图片预览",
+    "errorNoImage": "没有可解析的图片或缺少 API 密钥。",
+    "errorAnalysisFailed": "解析失败。请检查您的 API 密钥和网络连接。",
+    "errorCaptureFailed": "截图失败。",
+    "errorAddFailed": "添加单词失败。",
+    "errorSaveFailed": "保存单词失败。",
+    "warningKeyMissing": "缺少 Gemini API 密钥。",
+    "word": "单词",
+    "reading": "读音",
+    "meaning": "含义",
+    "note": "笔记"
+  },
+  "vocabulary": {
+    "books": "生词本列表",
+    "createBook": "创建生词本",
+    "bookName": "生词本名称",
+    "description": "描述",
+    "noWords": "该生词本暂无单词。",
+    "selectBook": "请选择一个生词本",
+    "createNewBookTitle": "创建新生词本",
+    "deleteBookConfirm": "确定要删除该生词本吗？其中的所有单词都将丢失。",
+    "note": "笔记:",
+    "addedDate": "添加日期:"
+  },
+  "prompts": {
+    "title": "提示词管理",
+    "newPrompt": "新建提示词",
+    "editPrompt": "编辑提示词",
+    "promptName": "提示词名称",
+    "promptContent": "提示词内容",
+    "noPrompts": "未找到提示词。请创建一个！",
+    "deleteConfirm": "确定要删除该提示词吗？"
+  },
+  "about": {
+    "title": "关于",
+    "description": "这是 GoIHelper 应用程序。"
+  }
+}

@@ -107,6 +107,31 @@ app.whenReady().then(() => {
     return db?.deletePrompt(id);
   });
 
+  // Vocabulary IPC Handlers
+  ipcMain.handle('get-books', () => {
+    return db?.getBooks() || [];
+  });
+
+  ipcMain.handle('create-book', (_, name: string, description?: string) => {
+    return db?.createBook(name, description);
+  });
+
+  ipcMain.handle('delete-book', (_, id: number) => {
+    return db?.deleteBook(id);
+  });
+
+  ipcMain.handle('get-words', (_, bookId: number) => {
+    return db?.getWords(bookId) || [];
+  });
+
+  ipcMain.handle('add-word', (_, bookId: number, word: string, reading?: string, meaning?: string, note?: string) => {
+    return db?.addWord(bookId, word, reading, meaning, note);
+  });
+
+  ipcMain.handle('delete-word', (_, id: number) => {
+    return db?.deleteWord(id);
+  });
+
   createWindow()
 
   app.on('activate', function () {

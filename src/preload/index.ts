@@ -7,6 +7,14 @@ const api = {
   addPrompt: (name: string, content: string) => ipcRenderer.invoke('add-prompt', name, content),
   updatePrompt: (id: number, name: string, content: string) => ipcRenderer.invoke('update-prompt', id, name, content),
   deletePrompt: (id: number) => ipcRenderer.invoke('delete-prompt', id),
+
+  // Vocabulary APIs
+  getBooks: () => ipcRenderer.invoke('get-books'),
+  createBook: (name: string, description?: string) => ipcRenderer.invoke('create-book', name, description),
+  deleteBook: (id: number) => ipcRenderer.invoke('delete-book', id),
+  getWords: (bookId: number) => ipcRenderer.invoke('get-words', bookId),
+  addWord: (bookId: number, word: string, reading?: string, meaning?: string, note?: string) => ipcRenderer.invoke('add-word', bookId, word, reading, meaning, note),
+  deleteWord: (id: number) => ipcRenderer.invoke('delete-word', id),
 }
 
 // Use `contextBridge` APIs to expose Electron APIs to

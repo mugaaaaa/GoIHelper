@@ -18,6 +18,7 @@ import {
 import EditIcon from '@mui/icons-material/Edit';
 import DeleteIcon from '@mui/icons-material/Delete';
 import AddIcon from '@mui/icons-material/Add';
+import { useTranslation } from 'react-i18next';
 
 interface Prompt {
   id: number;
@@ -26,6 +27,7 @@ interface Prompt {
 }
 
 export default function PromptPage(): React.JSX.Element {
+  const { t } = useTranslation();
   const [prompts, setPrompts] = useState<Prompt[]>([]);
   const [open, setOpen] = useState(false);
   const [editingPrompt, setEditingPrompt] = useState<Prompt | null>(null);
@@ -80,7 +82,7 @@ export default function PromptPage(): React.JSX.Element {
   };
 
   const handleDelete = async (id: number) => {
-    if (confirm('Are you sure you want to delete this prompt?')) {
+    if (confirm(t('prompts.deleteConfirm'))) {
       try {
         await window.api.deletePrompt(id);
         fetchPrompts();
@@ -93,9 +95,9 @@ export default function PromptPage(): React.JSX.Element {
   return (
     <Box sx={{ p: 2, height: '100%', overflow: 'auto' }}>
       <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 2 }}>
-        <Typography variant="h4">Prompt Management</Typography>
+        <Typography variant="h4">{t('prompts.title')}</Typography>
         <Button variant="contained" startIcon={<AddIcon />} onClick={() => handleOpen()}>
-          New Prompt
+          {t('prompts.newPrompt')}
         </Button>
       </Box>
 
@@ -139,25 +141,25 @@ export default function PromptPage(): React.JSX.Element {
           ))}
           {prompts.length === 0 && (
             <ListItem>
-              <ListItemText primary="No prompts found. Create one!" />
+              <ListItemText primary={t('prompts.noPrompts')} />
             </ListItem>
           )}
         </List>
       </Paper>
 
       <Dialog open={open} onClose={handleClose} fullWidth maxWidth="md">
-        <DialogTitle>{editingPrompt ? 'Edit Prompt' : 'New Prompt'}</DialogTitle>
+        <DialogTitle>{editingPrompt ? t('prompts.editPrompt') : t('prompts.newPrompt')}</DialogTitle>
         <DialogContent>
           <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2, mt: 1 }}>
             <TextField
-              label="Prompt Name"
+              label={t('prompts.promptName')}
               value={name}
               onChange={(e) => setName(e.target.value)}
               fullWidth
               autoFocus
             />
             <TextField
-              label="Prompt Content"
+              label={t('prompts.promptContent')}
               value={content}
               onChange={(e) => setContent(e.target.value)}
               fullWidth
@@ -167,9 +169,9 @@ export default function PromptPage(): React.JSX.Element {
           </Box>
         </DialogContent>
         <DialogActions>
-          <Button onClick={handleClose}>Cancel</Button>
+          <Button onClick={handleClose}>{t('common.cancel')}</Button>
           <Button onClick={handleSave} variant="contained" disabled={!name.trim() || !content.trim()}>
-            Save
+            {t('common.save')}
           </Button>
         </DialogActions>
       </Dialog>

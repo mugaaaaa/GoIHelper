@@ -1,0 +1,69 @@
+{
+  "sidebar": {
+    "screenshot": "Screen Shot",
+    "aianalysis": "AI analysis",
+    "vocabulary": "Vocabulary",
+    "prompts": "Prompts",
+    "settings": "Settings",
+    "about": "About"
+  },
+  "settings": {
+    "title": "Settings",
+    "language": "Language",
+    "selectLanguage": "Select Language"
+  },
+  "common": {
+    "add": "Add",
+    "delete": "Delete",
+    "cancel": "Cancel",
+    "save": "Save",
+    "edit": "Edit",
+    "create": "Create"
+  },
+  "screenshot": {
+    "analyze": "Analyze",
+    "analyzing": "Analyzing...",
+    "copyMarkdown": "Copy Markdown",
+    "analysisResult": "Analysis Result",
+    "detectedVocabulary": "Detected Vocabulary",
+    "manualAdd": "Manual Add",
+    "selectPrompt": "Select Prompt",
+    "selectBook": "Select Book",
+    "imagePreview": "Image Preview",
+    "errorNoImage": "No image to analyze or API Key missing.",
+    "errorAnalysisFailed": "Analysis failed. Please check your API key and connection.",
+    "errorCaptureFailed": "Failed to capture screenshot.",
+    "errorAddFailed": "Failed to add word.",
+    "errorSaveFailed": "Failed to save word.",
+    "warningKeyMissing": "Gemini API Key is missing.",
+    "word": "Word",
+    "reading": "Reading",
+    "meaning": "Meaning",
+    "note": "Note"
+  },
+  "vocabulary": {
+    "books": "Books",
+    "createBook": "Create Book",
+    "bookName": "Book Name",
+    "description": "Description",
+    "noWords": "No words in this book yet.",
+    "selectBook": "Select a Book",
+    "createNewBookTitle": "Create New Vocabulary Book",
+    "deleteBookConfirm": "Are you sure you want to delete this book? All words in it will be lost.",
+    "note": "Note:",
+    "addedDate": "Added:"
+  },
+  "prompts": {
+    "title": "Prompt Management",
+    "newPrompt": "New Prompt",
+    "editPrompt": "Edit Prompt",
+    "promptName": "Prompt Name",
+    "promptContent": "Prompt Content",
+    "noPrompts": "No prompts found. Create one!",
+    "deleteConfirm": "Are you sure you want to delete this prompt?"
+  },
+  "about": {
+    "title": "About",
+    "description": "This is the GoIHelper application."
+  }
+}
