@@ -4,7 +4,7 @@ export class QwenService implements AIService {
   private apiKey: string;
   private model: string;
 
-  constructor(apiKey: string, model: string = 'qwen3-vl-flash') {
+  constructor(apiKey: string, model: string = 'qwen-turbo') {
     this.apiKey = apiKey;
     this.model = model;
   }
@@ -30,6 +30,29 @@ export class QwenService implements AIService {
 
     } catch (error) {
       console.error('Qwen Analysis Failed:', error);
+      throw error;
+    }
+  }
+
+  async analyzeText(text: string, prompt?: string): Promise<AIAnalysisResult> {
+    try {
+      const defaultPrompt = `
+        Please analyze this text. 
+        If it contains Japanese text, please:
+        1. Transcribe the Japanese text.
+        2. Provide a translation.
+        3. Break down the sentence structure and explain key vocabulary.
+      `;
+
+      const promptText = prompt || defaultPrompt;
+
+      console.log('Qwen Text Analysis via Main Process:', this.model);
+
+      const result = await window.api.analyzeTextQwen(this.apiKey, this.model, promptText, text);
+      
+      return result;
+    } catch (error) {
+      console.error('Qwen Text Analysis Failed:', error);
       throw error;
     }
   }

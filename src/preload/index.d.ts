@@ -23,6 +23,26 @@ export interface VocabularyWord {
   created_at: string;
 }
 
+export interface GrammarBook {
+  id: number;
+  name: string;
+  description?: string;
+  created_at: string;
+}
+
+export interface GrammarItem {
+  id: number;
+  book_id: number;
+  grammar: string;
+  reading?: string;
+  structure?: string;
+  meaning?: string;
+  context?: string;
+  examples?: string;
+  note?: string;
+  created_at: string;
+}
+
 declare global {
   interface Window {
     electron: ElectronAPI
@@ -39,8 +59,19 @@ declare global {
       addWord: (bookId: number, word: string, reading?: string, meaning?: string, note?: string) => Promise<number>
       updateWord: (id: number, word: string, reading?: string, meaning?: string, note?: string) => Promise<void>
       deleteWord: (id: number) => Promise<void>
+      
+      getGrammarBooks: () => Promise<GrammarBook[]>
+      createGrammarBook: (name: string, description?: string) => Promise<number>
+      deleteGrammarBook: (id: number) => Promise<void>
+      getGrammarItems: (bookId: number) => Promise<GrammarItem[]>
+      addGrammarItem: (bookId: number, grammar: string, reading?: string, structure?: string, meaning?: string, context?: string, examples?: string, note?: string) => Promise<number>
+      updateGrammarItem: (id: number, grammar: string, reading?: string, structure?: string, meaning?: string, context?: string, examples?: string, note?: string) => Promise<void>
+      deleteGrammarItem: (id: number) => Promise<void>
+
       setProxy: (port: string) => Promise<void>
       analyzeImageQwen: (apiKey: string, model: string, prompt: string, imageBase64: string) => Promise<{ text: string, raw: any }>
+      analyzeTextQwen: (apiKey: string, model: string, prompt: string, text: string) => Promise<{ text: string, raw: any }>
+      analyzeTextDeepSeek: (apiKey: string, model: string, prompt: string, text: string) => Promise<{ text: string, raw: any }>
       setGlobalShortcut: (shortcut: string) => Promise<boolean>
       onAutoAnalyzeScreenshot: (callback: (image: string) => void) => () => void
     }

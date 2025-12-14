@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { Box, Typography, FormControl, InputLabel, Select, MenuItem, SelectChangeEvent, Paper, TextField, Button, Snackbar, Alert } from '@mui/material';
+import { Box, Typography, FormControl, InputLabel, Select, MenuItem, SelectChangeEvent, Paper, TextField, Button, Snackbar, Alert, Switch, FormControlLabel } from '@mui/material';
 import { useTranslation } from 'react-i18next';
 
 export default function SettingsPage(): React.JSX.Element {
@@ -7,9 +7,14 @@ export default function SettingsPage(): React.JSX.Element {
   
   // State
   const [proxyPort, setProxyPort] = useState('7897');
+  const [useProxy, setUseProxy] = useState(true);
   const [geminiKey, setGeminiKey] = useState('');
   const [qwenKey, setQwenKey] = useState('');
-  const [selectedModel, setSelectedModel] = useState('gemini-2.5-flash');
+  const [deepseekKey, setDeepseekKey] = useState('');
+  
+  const [selectedImageModel, setSelectedImageModel] = useState('gemini-2.5-flash');
+  const [selectedTextModel, setSelectedTextModel] = useState('gemini-2.5-flash');
+  
   const [globalShortcut, setGlobalShortcut] = useState('CommandOrControl+Q');
   const [recordingShortcut, setRecordingShortcut] = useState(false);
   const [snackbarOpen, setSnackbarOpen] = useState(false);
@@ -18,21 +23,32 @@ export default function SettingsPage(): React.JSX.Element {
     const storedProxyPort = localStorage.getItem('proxy_port') || '7897';
     setProxyPort(storedProxyPort);
 
+    const storedUseProxy = localStorage.getItem('use_proxy') !== 'false';
+    setUseProxy(storedUseProxy);
+
     const storedGeminiKey = localStorage.getItem('gemini_api_key') || '';
     setGeminiKey(storedGeminiKey);
     
     const storedQwenKey = localStorage.getItem('qwen_api_key') || '';
     setQwenKey(storedQwenKey);
 
-    const storedModel = localStorage.getItem('selected_model') || 'gemini-2.5-flash';
-    setSelectedModel(storedModel);
+    const storedDeepseekKey = localStorage.getItem('deepseek_api_key') || '';
+    setDeepseekKey(storedDeepseekKey);
+
+    const storedImageModel = localStorage.getItem('selected_image_model') || 'gemini-2.5-flash';
+    setSelectedImageModel(storedImageModel);
+
+    const storedTextModel = localStorage.getItem('selected_text_model') || 'gemini-2.5-flash';
+    setSelectedTextModel(storedTextModel);
 
     const storedShortcut = localStorage.getItem('global_shortcut') || 'CommandOrControl+Q';
     setGlobalShortcut(storedShortcut);
   }, []);
 
   const handleLanguageChange = (event: SelectChangeEvent) => {
-    i18n.changeLanguage(event.target.value as string);
+    const lang = event.target.value as string;
+    i18n.changeLanguage(lang);
+    localStorage.setItem('language', lang);
   };
 
   const handleKeyDown = (e: React.KeyboardEvent) => {
@@ -60,14 +76,19 @@ export default function SettingsPage(): React.JSX.Element {
   const handleSave = async () => {
     localStorage.setItem('gemini_api_key', geminiKey);
     localStorage.setItem('qwen_api_key', qwenKey);
+    localStorage.setItem('deepseek_api_key', deepseekKey);
     localStorage.setItem('proxy_port', proxyPort);
-    localStorage.setItem('selected_model', selectedModel);
+    localStorage.setItem('use_proxy', String(useProxy));
+    localStorage.setItem('selected_image_model', selectedImageModel);
+    localStorage.setItem('selected_text_model', selectedTextModel);
     localStorage.setItem('global_shortcut', globalShortcut);
     
     // Apply proxy settings
     try {
-      if (proxyPort) {
+      if (useProxy && proxyPort) {
         await window.api.setProxy(proxyPort);
+      } else {
+        await window.api.setProxy('');
       }
       
       const success = await window.api.setGlobalShortcut(globalShortcut);
@@ -109,14 +130,27 @@ export default function SettingsPage(): React.JSX.Element {
           </Select>
         </FormControl>
 
-        <TextField
-          label={t('settings.proxyPort')}
-          fullWidth
-          value={proxyPort}
-          onChange={(e) => setProxyPort(e.target.value)}
-          sx={{ mt: 3 }}
-          helperText="Default: 7897"
-        />
+        <Box sx={{ mt: 3, display: 'flex', alignItems: 'center', gap: 2 }}>
+          <FormControlLabel
+            control={
+              <Switch
+                checked={useProxy}
+                onChange={(e) => setUseProxy(e.target.checked)}
+              />
+            }
+            label={t('settings.useProxy')}
+          />
+          
+          <TextField
+            label={t('settings.proxyPort')}
+            fullWidth
+            value={proxyPort}
+            onChange={(e) => setProxyPort(e.target.value)}
+            disabled={!useProxy}
+            helperText="Default: 7897"
+            sx={{ flexGrow: 1 }}
+          />
+        </Box>
 
         <Box sx={{ mt: 3 }}>
           <Typography variant="subtitle1" gutterBottom>
@@ -153,16 +187,42 @@ export default function SettingsPage(): React.JSX.Element {
           {t('settings.aiModel')}
         </Typography>
         
+        {/* Image Model Selector */}
         <FormControl fullWidth sx={{ mt: 2 }}>
-          <InputLabel id="model-select-label">{t('settings.selectModel')}</InputLabel>
+          <InputLabel id="image-model-select-label">{t('settings.imageModel')}</InputLabel>
           <Select
-            labelId="model-select-label"
-            value={selectedModel}
-            label={t('settings.selectModel')}
-            onChange={(e) => setSelectedModel(e.target.value)}
+            labelId="image-model-select-label"
+            value={selectedImageModel}
+            label={t('settings.imageModel')}
+            onChange={(e) => setSelectedImageModel(e.target.value)}
           >
             <MenuItem value="gemini-2.5-flash">Gemini 2.5 Flash</MenuItem>
-            <MenuItem value="qwen3-vl-flash">Qwen3 VL Flash (Aliyun)</MenuItem>
+            <MenuItem value="gemini-2.0-flash-exp">Gemini 2.0 Flash Exp</MenuItem>
+            <MenuItem value="qwen-vl-max">Qwen VL Max</MenuItem>
+            <MenuItem value="qwen-vl-plus">Qwen VL Plus</MenuItem>
+            <MenuItem value="qwen3-vl-flash">Qwen 3 VL Flash</MenuItem>
+          </Select>
+        </FormControl>
+
+        {/* Text Model Selector */}
+        <FormControl fullWidth sx={{ mt: 3 }}>
+          <InputLabel id="text-model-select-label">{t('settings.textModel')}</InputLabel>
+          <Select
+            labelId="text-model-select-label"
+            value={selectedTextModel}
+            label={t('settings.textModel')}
+            onChange={(e) => setSelectedTextModel(e.target.value)}
+          >
+            <MenuItem value="gemini-2.5-flash">Gemini 2.5 Flash</MenuItem>
+            <MenuItem value="gemini-2.0-flash-exp">Gemini 2.0 Flash Exp</MenuItem>
+            <MenuItem value="qwen-turbo">Qwen Turbo</MenuItem>
+            <MenuItem value="qwen-plus">Qwen Plus</MenuItem>
+            <MenuItem value="qwen-max">Qwen Max</MenuItem>
+            <MenuItem value="qwen-flash">Qwen Flash</MenuItem>
+            <MenuItem value="qwen3-vl-flash">Qwen 3 VL Flash</MenuItem>
+            <MenuItem value="deepseek-chat">DeepSeek V3 (Chat)</MenuItem>
+            <MenuItem value="deepseek-reasoner">DeepSeek R1 (Reasoner)</MenuItem>
+            <MenuItem value="deepseek-coder">DeepSeek Coder</MenuItem>
           </Select>
         </FormControl>
 
@@ -184,6 +244,16 @@ export default function SettingsPage(): React.JSX.Element {
           sx={{ mt: 3 }}
           type="password"
           helperText="For Qwen Models (Aliyun DashScope)"
+        />
+
+        <TextField
+          label={t('settings.deepseekKey')}
+          fullWidth
+          value={deepseekKey}
+          onChange={(e) => setDeepseekKey(e.target.value)}
+          sx={{ mt: 3 }}
+          type="password"
+          helperText="For DeepSeek Models"
         />
 
         <Box sx={{ mt: 3, display: 'flex', justifyContent: 'flex-end' }}>

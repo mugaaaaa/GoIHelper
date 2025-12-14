@@ -2,9 +2,11 @@
   "sidebar": {
     "screenshot": "屏幕截图",
     "aianalysis": "AI解析",
+    "textAnalysis": "文本解析",
     "vocabulary": "生词本",
     "prompts": "提示词",
     "settings": "设置",
+    "grammar": "语法本",
     "about": "关于"
   },
   "settings": {
@@ -14,8 +16,12 @@
     "selectLanguage": "选择语言",
     "aiModel": "AI 模型设置",
     "selectModel": "选择 AI 模型",
+    "imageModel": "图像解析模型",
+    "textModel": "文本解析模型",
     "geminiKey": "Gemini API 密钥",
     "qwenKey": "通义千问 API 密钥 (阿里云)",
+    "deepseekKey": "DeepSeek API 密钥",
+    "useProxy": "使用代理",
     "proxyPort": "代理端口",
     "proxyPortHelper": "默认: 7897",
     "saveSuccess": "设置保存成功。",
@@ -23,6 +29,7 @@
   },
   "common": {
     "add": "添加",
+    "added": "已添加",
     "delete": "删除",
     "cancel": "取消",
     "save": "保存",
@@ -34,7 +41,7 @@
     "analyzing": "解析中...",
     "copyMarkdown": "复制 Markdown",
     "analysisResult": "解析结果",
-    "detectedVocabulary": "检测到的生词",
+    "detectedVocabulary": "检测到的语法和生词",
     "manualAdd": "手动添加",
     "selectPrompt": "选择提示词",
     "selectBook": "选择生词本",
@@ -48,7 +55,11 @@
     "word": "单词",
     "reading": "读音",
     "meaning": "含义",
-    "note": "笔记"
+    "note": "笔记",
+    "structure": "结构",
+    "context": "上下文",
+    "examples": "例句",
+    "grammar": "语法"
   },
   "vocabulary": {
     "books": "生词本列表",
@@ -59,8 +70,30 @@
     "selectBook": "请选择一个生词本",
     "createNewBookTitle": "创建新生词本",
     "deleteBookConfirm": "确定要删除该生词本吗？其中的所有单词都将丢失。",
+    "editWord": "编辑单词",
+    "addWord": "添加单词",
     "note": "笔记:",
     "addedDate": "添加日期:"
+  },
+  "grammar": {
+    "books": "语法本列表",
+    "createBook": "创建语法本",
+    "bookName": "语法本名称",
+    "description": "描述",
+    "noItems": "该语法本暂无语法。",
+    "selectBook": "请选择一个语法本",
+    "createNewBookTitle": "创建新语法本",
+    "deleteBookConfirm": "确定要删除该语法本吗？其中的所有语法都将丢失。",
+    "editItem": "编辑语法",
+    "addItem": "添加语法",
+    "note": "笔记:",
+    "addedDate": "添加日期:",
+    "item": "语法点",
+    "reading": "读音",
+    "structure": "接续/结构",
+    "meaning": "意义",
+    "context": "上下文分析",
+    "examples": "例句"
   },
   "prompts": {
     "title": "提示词管理",

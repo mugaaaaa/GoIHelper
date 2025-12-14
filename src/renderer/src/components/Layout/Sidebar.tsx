@@ -17,8 +17,10 @@ import BookIcon from '@mui/icons-material/Book'
 import SettingsIcon from '@mui/icons-material/Settings'
 import MenuBookIcon from '@mui/icons-material/MenuBook'
 import DescriptionIcon from '@mui/icons-material/Description'
+import TextFieldsIcon from '@mui/icons-material/TextFields'
+import AutoStoriesIcon from '@mui/icons-material/AutoStories'
 
-const DRAW_WIDTH = 240
+const DRAW_WIDTH = 160
 
 export default function Sidebar(): React.JSX.Element {
   const navigate = useNavigate()
@@ -26,7 +28,9 @@ export default function Sidebar(): React.JSX.Element {
 
   const MENU_ITEMS = [
     { text: t('sidebar.screenshot'), icon: <CameraIcon />, path: '/screenshot' },
+    { text: t('sidebar.textAnalysis'), icon: <TextFieldsIcon />, path: '/text-analysis' },
     { text: t('sidebar.vocabulary'), icon: <MenuBookIcon />, path: '/vocabulary' },
+    { text: t('sidebar.grammar'), icon: <AutoStoriesIcon />, path: '/grammar' },
     { text: t('sidebar.prompts'), icon: <DescriptionIcon />, path: '/prompts' },
     { text: t('sidebar.settings'), icon: <SettingsIcon />, path: '/settings' },
     { text: t('sidebar.about'), icon: <BookIcon />, path: '/about' }

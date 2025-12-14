@@ -8,27 +8,41 @@ import { Link as RouterLink, useLocation } from 'react-router-dom'
 import { GeminiService } from '../services/ai/GeminiService'
 import { QwenService } from '../services/ai/QwenService'
 
-import { useScreenshot, DetectedWord } from '../context/ScreenshotContext'
+import { useScreenshot, DetectedWord, DetectedGrammar } from '../context/ScreenshotContext'
 import ReactMarkdown from 'react-markdown'
-import { Prompt, VocabularyBook } from '../../../preload/index'
+import { Prompt, VocabularyBook, GrammarBook } from '../../../preload/index'
 import { useTranslation } from 'react-i18next'
 
 const VOCAB_INSTRUCTION = `
 
 ---
 **INSTRUCTION FOR AI:**
-Please output the response in two parts:
-1. The analysis as requested above (in Markdown).
-2. A structured list of key vocabulary found in the text, in JSON format.
+请翻译并分析这段文本
+然后输出如下内容作为分隔符
 
-Separate the two parts with this exact marker:
----VOCAB-JSON-START---
-
-The JSON should be a list of objects with these keys: "word", "reading", "meaning", "note".
-The "note" should be the sentence where the word appears or any other context.
-Example:
+---GRAMMAR-JSON-START---
+请以JSON数组格式输出提取的语法点 (Grammar Items):
 [
-  {"word": "猫", "reading": "neko", "meaning": "Cat", "note": "猫がいます"}
+  {
+    "grammar": "语法点 (e.g. ～ようとしている)",
+    "reading": "读音 (e.g. ～ようとしている)",
+    "structure": "接续/结构 (e.g. 动词意志形 + としている)",
+    "meaning": "意义 (e.g. 表示正试图做某事...)",
+    "context": "上下文分析 (e.g. 这里表示...)",
+    "examples": "例句 (e.g. 必死に...)",
+    "note": "笔记 (Optional)"
+  }
+]
+
+---VOCAB-JSON-START---
+请以JSON数组格式输出提取的生词 (Vocabulary Words):
+[
+  {
+    "word": "单词 (e.g. 呟く)",
+    "reading": "读音 (e.g. つぶやく)",
+    "meaning": "意义 (e.g. 一个人喃喃自语...)",
+    "note": "笔记/例句 (e.g. 自らの事情を...)"
+  }
 ]
 `;
 
@@ -39,6 +53,7 @@ export default function ScreenshotPage(): React.JSX.Element {
     image, setImage, 
     analysis, setAnalysis, 
     detectedWords, setDetectedWords,
+    detectedGrammar, setDetectedGrammar,
     loading, setLoading, 
     error, setError 
   } = useScreenshot()
@@ -47,7 +62,9 @@ export default function ScreenshotPage(): React.JSX.Element {
   const [selectedPromptId, setSelectedPromptId] = useState<number | ''>('');
   
   const [vocabBooks, setVocabBooks] = useState<VocabularyBook[]>([]);
+  const [grammarBooks, setGrammarBooks] = useState<GrammarBook[]>([]);
   const [defaultBookId, setDefaultBookId] = useState<number | ''>('');
+  const [defaultGrammarBookId, setDefaultGrammarBookId] = useState<number | ''>('');
 
   // Manual Add Dialog State
   const [manualDialogOpen, setManualDialogOpen] = useState(false);
@@ -55,6 +72,10 @@ export default function ScreenshotPage(): React.JSX.Element {
     word: '', reading: '', meaning: '', note: '', bookId: '' as number | '' 
   });
   
+  // Track added words to prevent duplicates
+  const [addedWords, setAddedWords] = useState<Set<string>>(new Set());
+  const [addedGrammar, setAddedGrammar] = useState<Set<string>>(new Set());
+
   // API Key state
   const [apiKey, setApiKey] = useState<string>('');
   const [qwenKey, setQwenKey] = useState<string>('');
@@ -63,15 +84,7 @@ export default function ScreenshotPage(): React.JSX.Element {
   // Trigger analysis if navigated with state
   useEffect(() => {
     if (location.state && (location.state as any).autoAnalyze && image && !loading) {
-       // Need to ensure keys and prompts are loaded before analyzing
-       // But initData runs in another effect. 
-       // We can just call handleAnalyze() but we need dependencies.
-       // A cleaner way is to detect if image changed and we have the auto flag.
-       // However, image is already set.
-       
-       // Let's wait for initData to complete by checking prompts.length or key presence
        if (prompts.length > 0 && ((selectedModel.includes('gemini') && apiKey) || (!selectedModel.includes('gemini') && qwenKey))) {
-          // Clear the state to prevent loop
           window.history.replaceState({}, document.title);
           handleAnalyze();
        }
@@ -87,12 +100,13 @@ export default function ScreenshotPage(): React.JSX.Element {
         const storedQwenKey = localStorage.getItem('qwen_api_key');
         if (storedQwenKey) setQwenKey(storedQwenKey);
 
-        const storedModel = localStorage.getItem('selected_model');
+        const storedModel = localStorage.getItem('selected_image_model');
         if (storedModel) setSelectedModel(storedModel);
 
-        const [promptsData, booksData] = await Promise.all([
+        const [promptsData, booksData, grammarBooksData] = await Promise.all([
           window.api.getPrompts(),
-          window.api.getBooks()
+          window.api.getBooks(),
+          window.api.getGrammarBooks()
         ]);
         
         setPrompts(promptsData);
@@ -100,6 +114,9 @@ export default function ScreenshotPage(): React.JSX.Element {
 
         setVocabBooks(booksData);
         if (booksData.length > 0) setDefaultBookId(booksData[0].id);
+
+        setGrammarBooks(grammarBooksData);
+        if (grammarBooksData.length > 0) setDefaultGrammarBookId(grammarBooksData[0].id);
 
       } catch (error) {
         console.error('Failed to fetch initial data:', error);
@@ -116,6 +133,7 @@ export default function ScreenshotPage(): React.JSX.Element {
       setImage(imgData)
       setAnalysis(null) 
       setDetectedWords([])
+      setDetectedGrammar([])
     } catch (error) {
       console.error('Failed to take screenshot:', error)
       setError(t('screenshot.errorCaptureFailed'))
@@ -123,7 +141,6 @@ export default function ScreenshotPage(): React.JSX.Element {
   }
 
   const handleAnalyze = async (): Promise<void> => {
-    // Check for appropriate key based on model
     const isGemini = selectedModel.includes('gemini');
     const hasKey = isGemini ? !!apiKey : !!qwenKey;
 
@@ -135,6 +152,9 @@ export default function ScreenshotPage(): React.JSX.Element {
     setLoading(true)
     setError(null)
     setDetectedWords([])
+    setDetectedGrammar([])
+    setAddedWords(new Set())
+    setAddedGrammar(new Set())
     
     try {
       const selectedPrompt = prompts.find(p => p.id === selectedPromptId);
@@ -149,26 +169,62 @@ export default function ScreenshotPage(): React.JSX.Element {
 
       const result = await service.analyzeImage(image, promptText)
       
-      console.log('Analysis Raw Result:', result.text); // Debug Log
+      console.log('Analysis Raw Result:', result.text); 
 
-      const parts = result.text.split('---VOCAB-JSON-START---');
-      setAnalysis(parts[0]);
+      // Parse result
+      const grammarSplit = result.text.split('---GRAMMAR-JSON-START---');
+      setAnalysis(grammarSplit[0]);
 
-      if (parts[1]) {
+      if (grammarSplit[1]) {
+        const vocabSplit = grammarSplit[1].split('---VOCAB-JSON-START---');
+        const grammarJsonStr = vocabSplit[0];
+        
+        // Parse Grammar
         try {
-          // Clean JSON string (remove markdown code blocks if present)
-          const jsonStr = parts[1].replace(/```json/g, '').replace(/```/g, '').trim();
-          const words = JSON.parse(jsonStr);
-          if (Array.isArray(words)) {
-            // Map 'context' to 'note' if AI still returns 'context'
-            const mappedWords = words.map(w => ({
-              ...w,
-              note: w.note || w.context
-            }));
-            setDetectedWords(mappedWords);
+          const cleanGrammarJson = grammarJsonStr.replace(/```json/g, '').replace(/```/g, '').trim();
+          const grammarItems = JSON.parse(cleanGrammarJson);
+          if (Array.isArray(grammarItems)) {
+             setDetectedGrammar(grammarItems);
           }
         } catch (e) {
-          console.error('Failed to parse vocabulary JSON:', e);
+          console.error('Failed to parse grammar JSON:', e);
+        }
+
+        if (vocabSplit[1]) {
+           const vocabJsonStr = vocabSplit[1];
+           // Parse Vocab
+           try {
+              const cleanVocabJson = vocabJsonStr.replace(/```json/g, '').replace(/```/g, '').trim();
+              const vocabItems = JSON.parse(cleanVocabJson);
+              if (Array.isArray(vocabItems)) {
+                const mappedWords = vocabItems.map(w => ({
+                  ...w,
+                  note: w.note || w.context
+                }));
+                setDetectedWords(mappedWords);
+              }
+           } catch (e) {
+             console.error('Failed to parse vocab JSON:', e);
+           }
+        }
+      } else {
+        // Fallback for old format (just vocab) or AI error
+        const vocabSplit = result.text.split('---VOCAB-JSON-START---');
+        if (vocabSplit.length > 1) {
+             setAnalysis(vocabSplit[0]);
+             try {
+                const cleanVocabJson = vocabSplit[1].replace(/```json/g, '').replace(/```/g, '').trim();
+                const vocabItems = JSON.parse(cleanVocabJson);
+                if (Array.isArray(vocabItems)) {
+                  const mappedWords = vocabItems.map(w => ({
+                    ...w,
+                    note: w.note || w.context
+                  }));
+                  setDetectedWords(mappedWords);
+                }
+             } catch (e) {
+               console.error('Failed to parse vocab JSON (fallback):', e);
+             }
         }
       }
 
@@ -183,7 +239,26 @@ export default function ScreenshotPage(): React.JSX.Element {
   const handleQuickAdd = async (word: DetectedWord, bookId: number) => {
     try {
       await window.api.addWord(bookId, word.word, word.reading, word.meaning, word.note);
-      // Optional: Show success feedback
+      setAddedWords(prev => new Set(prev).add(word.word));
+    } catch (e) {
+      console.error(e);
+      setError(t('screenshot.errorAddFailed'));
+    }
+  }
+
+  const handleQuickAddGrammar = async (item: DetectedGrammar, bookId: number) => {
+    try {
+      await window.api.addGrammarItem(
+        bookId, 
+        item.grammar, 
+        item.reading, 
+        item.structure, 
+        item.meaning, 
+        item.context, 
+        item.examples, 
+        item.note
+      );
+      setAddedGrammar(prev => new Set(prev).add(item.grammar));
     } catch (e) {
       console.error(e);
       setError(t('screenshot.errorAddFailed'));
@@ -221,6 +296,7 @@ export default function ScreenshotPage(): React.JSX.Element {
       setError(t('screenshot.errorSaveFailed'));
     }
   }
+
 
   return (
     <Box sx={{ p: 2, height: '100%', overflow: 'auto', display: 'flex', flexDirection: 'column', gap: 2 }}>
@@ -271,6 +347,70 @@ export default function ScreenshotPage(): React.JSX.Element {
         </Paper>
       )}
 
+      {/* Detected Grammar */}
+      {detectedGrammar.length > 0 && (
+        <Box sx={{ mt: 2 }}>
+          <Typography variant="h6" gutterBottom>{t('grammar.item')}</Typography>
+          <Grid container spacing={2}>
+            {detectedGrammar.map((item, index) => (
+              // @ts-ignore
+              <Grid item xs={12} key={index}>
+                <Card variant="outlined">
+                  <CardContent>
+                    <Typography variant="h6" component="div" color="primary">
+                      {item.grammar}
+                    </Typography>
+                    <Typography sx={{ mb: 1 }} color="text.secondary">
+                      {item.reading}
+                    </Typography>
+                    
+                    <Typography variant="body1" sx={{ fontWeight: 'bold' }}>
+                      {item.meaning}
+                    </Typography>
+                    
+                    {item.structure && (
+                      <Typography variant="body2" sx={{ mt: 1 }}>
+                        <strong>{t('grammar.structure')}:</strong> {item.structure}
+                      </Typography>
+                    )}
+                    
+                    {item.context && (
+                      <Typography variant="body2" sx={{ mt: 1 }}>
+                        <strong>{t('grammar.context')}:</strong> {item.context}
+                      </Typography>
+                    )}
+
+                    {item.examples && (
+                      <Box sx={{ mt: 1, bgcolor: '#f5f5f5', p: 1, borderRadius: 1 }}>
+                        <Typography variant="caption" display="block" color="text.secondary">{t('grammar.examples')}</Typography>
+                        <Typography variant="body2" sx={{ whiteSpace: 'pre-wrap' }}>{item.examples}</Typography>
+                      </Box>
+                    )}
+                  </CardContent>
+                  <CardActions>
+                    <Select 
+                      size="small" 
+                      value={defaultGrammarBookId} 
+                      onChange={(e) => setDefaultGrammarBookId(Number(e.target.value))}
+                      sx={{ minWidth: 120, mr: 1 }}
+                    >
+                       {grammarBooks.map(b => <MenuItem key={b.id} value={b.id}>{b.name}</MenuItem>)}
+                    </Select>
+                    <Button 
+                      size="small" 
+                      onClick={() => defaultGrammarBookId && handleQuickAddGrammar(item, defaultGrammarBookId as number)}
+                      disabled={addedGrammar.has(item.grammar)}
+                    >
+                      {addedGrammar.has(item.grammar) ? t('common.added') : t('common.add')}
+                    </Button>
+                  </CardActions>
+                </Card>
+              </Grid>
+            ))}
+          </Grid>
+        </Box>
+      )}
+
       {/* Detected Vocabulary */}
       {detectedWords.length > 0 && (
         <Box sx={{ mt: 2 }}>
@@ -305,7 +445,13 @@ export default function ScreenshotPage(): React.JSX.Element {
                     >
                        {vocabBooks.map(b => <MenuItem key={b.id} value={b.id}>{b.name}</MenuItem>)}
                     </Select>
-                    <Button size="small" onClick={() => defaultBookId && handleQuickAdd(word, defaultBookId as number)}>{t('common.add')}</Button>
+                    <Button 
+                      size="small" 
+                      onClick={() => defaultBookId && handleQuickAdd(word, defaultBookId as number)}
+                      disabled={addedWords.has(word.word)}
+                    >
+                      {addedWords.has(word.word) ? t('common.added') || 'Added' : t('common.add')}
+                    </Button>
                   </CardActions>
                 </Card>
               </Grid>

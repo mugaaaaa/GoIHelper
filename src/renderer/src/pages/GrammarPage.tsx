@@ -10,37 +10,37 @@ import AddIcon from '@mui/icons-material/Add';
 import DownloadIcon from '@mui/icons-material/Download';
 import ExpandMoreIcon from '@mui/icons-material/ExpandMore';
 import ExpandLessIcon from '@mui/icons-material/ExpandLess';
-import { VocabularyBook, VocabularyWord } from '../../../preload/index';
+import { GrammarBook, GrammarItem } from '../../../preload/index';
 import { useTranslation } from 'react-i18next';
 
-export default function VocabularyPage(): React.JSX.Element {
+export default function GrammarPage(): React.JSX.Element {
   const { t } = useTranslation();
-  const [books, setBooks] = useState<VocabularyBook[]>([]);
+  const [books, setBooks] = useState<GrammarBook[]>([]);
   const [selectedBookId, setSelectedBookId] = useState<number | null>(null);
-  const [words, setWords] = useState<VocabularyWord[]>([]);
+  const [items, setItems] = useState<GrammarItem[]>([]);
   
   const [createBookOpen, setCreateBookOpen] = useState(false);
   const [newBookName, setNewBookName] = useState('');
   const [newBookDesc, setNewBookDesc] = useState('');
 
-  // Edit Word State
-  const [editWordOpen, setEditWordOpen] = useState(false);
-  const [editingWord, setEditingWord] = useState<VocabularyWord | null>(null);
+  // Edit Item State
+  const [editItemOpen, setEditItemOpen] = useState(false);
+  const [editingItem, setEditingItem] = useState<GrammarItem | null>(null);
   const [editFormData, setEditFormData] = useState({
-    word: '', reading: '', meaning: '', note: ''
+    grammar: '', reading: '', structure: '', meaning: '', context: '', examples: '', note: ''
   });
 
-  // Add Word State
-  const [addWordOpen, setAddWordOpen] = useState(false);
+  // Add Item State
+  const [addItemOpen, setAddItemOpen] = useState(false);
   const [addFormData, setAddFormData] = useState({
-    word: '', reading: '', meaning: '', note: ''
+    grammar: '', reading: '', structure: '', meaning: '', context: '', examples: '', note: ''
   });
 
-  const [expandedWordId, setExpandedWordId] = useState<number | null>(null);
+  const [expandedItemId, setExpandedItemId] = useState<number | null>(null);
 
   const fetchBooks = async () => {
     try {
-      const data = await window.api.getBooks();
+      const data = await window.api.getGrammarBooks();
       setBooks(data);
       if (data.length > 0 && selectedBookId === null) {
         setSelectedBookId(data[0].id);
@@ -50,11 +50,11 @@ export default function VocabularyPage(): React.JSX.Element {
     }
   };
 
-  const fetchWords = async () => {
+  const fetchItems = async () => {
     if (!selectedBookId) return;
     try {
-      const data = await window.api.getWords(selectedBookId);
-      setWords(data);
+      const data = await window.api.getGrammarItems(selectedBookId);
+      setItems(data);
     } catch (e) {
       console.error(e);
     }
@@ -66,14 +66,14 @@ export default function VocabularyPage(): React.JSX.Element {
 
   useEffect(() => {
     if (selectedBookId) {
-      fetchWords();
+      fetchItems();
     }
   }, [selectedBookId]);
 
   const handleCreateBook = async () => {
     if (!newBookName) return;
     try {
-      await window.api.createBook(newBookName, newBookDesc);
+      await window.api.createGrammarBook(newBookName, newBookDesc);
       setNewBookName('');
       setNewBookDesc('');
       setCreateBookOpen(false);
@@ -85,9 +85,9 @@ export default function VocabularyPage(): React.JSX.Element {
 
   const handleDeleteBook = async (id: number, e: React.MouseEvent) => {
     e.stopPropagation();
-    if (confirm(t('vocabulary.deleteBookConfirm'))) {
+    if (confirm(t('grammar.deleteBookConfirm'))) {
       try {
-        await window.api.deleteBook(id);
+        await window.api.deleteGrammarBook(id);
         if (selectedBookId === id) setSelectedBookId(null);
         fetchBooks();
       } catch (e) {
@@ -96,94 +96,100 @@ export default function VocabularyPage(): React.JSX.Element {
     }
   };
 
-  const handleDeleteWord = async (id: number) => {
+  const handleDeleteItem = async (id: number) => {
     try {
-      await window.api.deleteWord(id);
-      fetchWords();
+      await window.api.deleteGrammarItem(id);
+      fetchItems();
     } catch (e) {
       console.error(e);
     }
   };
 
-  const handleEditWord = (word: VocabularyWord) => {
-    setEditingWord(word);
+  const handleEditItem = (item: GrammarItem) => {
+    setEditingItem(item);
     setEditFormData({
-      word: word.word,
-      reading: word.reading || '',
-      meaning: word.meaning || '',
-      note: word.note || ''
+      grammar: item.grammar,
+      reading: item.reading || '',
+      structure: item.structure || '',
+      meaning: item.meaning || '',
+      context: item.context || '',
+      examples: item.examples || '',
+      note: item.note || ''
     });
-    setEditWordOpen(true);
+    setEditItemOpen(true);
   };
 
-  const handleSaveWord = async () => {
-    if (!editingWord) return;
+  const handleSaveItem = async () => {
+    if (!editingItem) return;
     try {
-      await window.api.updateWord(
-        editingWord.id,
-        editFormData.word,
+      await window.api.updateGrammarItem(
+        editingItem.id,
+        editFormData.grammar,
         editFormData.reading,
+        editFormData.structure,
         editFormData.meaning,
+        editFormData.context,
+        editFormData.examples,
         editFormData.note
       );
-      setEditWordOpen(false);
-      setEditingWord(null);
-      fetchWords();
+      setEditItemOpen(false);
+      setEditingItem(null);
+      fetchItems();
     } catch (e) {
-      console.error('Failed to update word:', e);
+      console.error('Failed to update grammar item:', e);
     }
   };
 
-  const handleOpenAddWord = () => {
-    setAddFormData({ word: '', reading: '', meaning: '', note: '' });
-    setAddWordOpen(true);
+  const handleOpenAddItem = () => {
+    setAddFormData({ grammar: '', reading: '', structure: '', meaning: '', context: '', examples: '', note: '' });
+    setAddItemOpen(true);
   };
 
-  const handleSaveNewWord = async () => {
-    if (!selectedBookId || !addFormData.word) return;
+  const handleSaveNewItem = async () => {
+    if (!selectedBookId || !addFormData.grammar) return;
     try {
-      await window.api.addWord(
+      await window.api.addGrammarItem(
         selectedBookId,
-        addFormData.word,
+        addFormData.grammar,
         addFormData.reading,
+        addFormData.structure,
         addFormData.meaning,
+        addFormData.context,
+        addFormData.examples,
         addFormData.note
       );
-      setAddWordOpen(false);
-      fetchWords();
+      setAddItemOpen(false);
+      fetchItems();
     } catch (e) {
-      console.error('Failed to add word:', e);
+      console.error('Failed to add grammar item:', e);
     }
   };
 
   const handleExportAnki = () => {
-    if (words.length === 0) return;
+    if (items.length === 0) return;
     
-    // Create CSV content (Tab separated is better for Anki actually, but let's stick to standard CSV or TSV)
-    // Anki defaults to allowing HTML in fields, so we can keep it simple.
-    // Format: Word <tab> Reading <tab> Meaning <tab> Note
-    const header = '# Word\tReading\tMeaning\tNote\n';
-    const content = words.map(w => {
-      // Escape tabs and newlines within fields to avoid breaking the format
+    // Format: Grammar <tab> Reading <tab> Structure <tab> Meaning <tab> Context <tab> Examples <tab> Note
+    const header = '# Grammar\tReading\tStructure\tMeaning\tContext\tExamples\tNote\n';
+    const content = items.map(item => {
       const clean = (s?: string) => (s || '').replace(/\t/g, ' ').replace(/\n/g, '<br>');
-      return `${clean(w.word)}\t${clean(w.reading)}\t${clean(w.meaning)}\t${clean(w.note)}`;
+      return `${clean(item.grammar)}\t${clean(item.reading)}\t${clean(item.structure)}\t${clean(item.meaning)}\t${clean(item.context)}\t${clean(item.examples)}\t${clean(item.note)}`;
     }).join('\n');
 
     const blob = new Blob([header + content], { type: 'text/tab-separated-values;charset=utf-8' });
     const url = URL.createObjectURL(blob);
     const link = document.createElement('a');
     link.href = url;
-    link.download = `anki_export_${selectedBookId}_${new Date().toISOString().slice(0,10)}.txt`;
+    link.download = `grammar_anki_export_${selectedBookId}_${new Date().toISOString().slice(0,10)}.txt`;
     document.body.appendChild(link);
     link.click();
     document.body.removeChild(link);
   };
 
-  const toggleExpandWord = (id: number) => {
-    if (expandedWordId === id) {
-      setExpandedWordId(null);
+  const toggleExpandItem = (id: number) => {
+    if (expandedItemId === id) {
+      setExpandedItemId(null);
     } else {
-      setExpandedWordId(id);
+      setExpandedItemId(id);
     }
   };
 
@@ -192,7 +198,7 @@ export default function VocabularyPage(): React.JSX.Element {
       {/* Sidebar: Books List */}
       <Paper elevation={2} sx={{ width: 250, display: 'flex', flexDirection: 'column' }}>
         <Box sx={{ p: 2, display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-          <Typography variant="h6">{t('vocabulary.books')}</Typography>
+          <Typography variant="h6">{t('grammar.books')}</Typography>
           <IconButton size="small" onClick={() => setCreateBookOpen(true)}>
             <AddIcon />
           </IconButton>
@@ -220,18 +226,18 @@ export default function VocabularyPage(): React.JSX.Element {
         </List>
       </Paper>
 
-      {/* Main Area: Words List */}
+      {/* Main Area: Items List */}
       <Box sx={{ flexGrow: 1, display: 'flex', flexDirection: 'column', overflow: 'hidden' }}>
         <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 2 }}>
           <Typography variant="h5">
-            {books.find(b => b.id === selectedBookId)?.name || t('vocabulary.selectBook')}
+            {books.find(b => b.id === selectedBookId)?.name || t('grammar.selectBook')}
           </Typography>
           {selectedBookId && (
             <Box sx={{ display: 'flex', gap: 1 }}>
               <Button
                 variant="contained"
                 startIcon={<AddIcon />}
-                onClick={handleOpenAddWord}
+                onClick={handleOpenAddItem}
               >
                 {t('common.add')}
               </Button>
@@ -239,9 +245,9 @@ export default function VocabularyPage(): React.JSX.Element {
                 variant="outlined" 
                 startIcon={<DownloadIcon />} 
                 onClick={handleExportAnki}
-                disabled={words.length === 0}
+                disabled={items.length === 0}
               >
-                Export Anki
+                {t('grammar.exportAnki')}
               </Button>
             </Box>
           )}
@@ -250,57 +256,75 @@ export default function VocabularyPage(): React.JSX.Element {
         {selectedBookId && (
           <Box sx={{ flexGrow: 1, overflow: 'auto' }}>
             <Grid container spacing={2}>
-              {words.map((word) => (
+              {items.map((item) => (
                 // @ts-ignore
-                <Grid item xs={12} sm={6} md={4} key={word.id}>
+                <Grid item xs={12} sm={6} md={4} key={item.id}>
                   <Card variant="outlined" sx={{ height: '100%', display: 'flex', flexDirection: 'column' }}>
                     <CardContent sx={{ flexGrow: 1 }}>
                       <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
                         <Box>
                            <Typography variant="h6" component="div">
-                             {word.word}
+                             {item.grammar}
                            </Typography>
                            <Typography color="text.secondary">
-                             {word.reading}
+                             {item.reading}
                            </Typography>
                         </Box>
                         <Box>
-                          <IconButton size="small" onClick={() => handleEditWord(word)}>
+                          <IconButton size="small" onClick={() => handleEditItem(item)}>
                             <EditIcon fontSize="small" />
                           </IconButton>
-                          <IconButton size="small" onClick={() => toggleExpandWord(word.id)}>
-                             {expandedWordId === word.id ? <ExpandLessIcon /> : <ExpandMoreIcon />}
+                          <IconButton size="small" onClick={() => toggleExpandItem(item.id)}>
+                             {expandedItemId === item.id ? <ExpandLessIcon /> : <ExpandMoreIcon />}
                           </IconButton>
-                          <IconButton size="small" onClick={() => handleDeleteWord(word.id)}>
+                          <IconButton size="small" onClick={() => handleDeleteItem(item.id)}>
                             <DeleteIcon fontSize="small" />
                           </IconButton>
                         </Box>
                       </Box>
                       
                       <Typography variant="body1" sx={{ mt: 1, fontWeight: 'medium' }}>
-                        {word.meaning}
+                        {item.meaning}
                       </Typography>
 
-                      <Collapse in={expandedWordId === word.id}>
-                        {word.note && (
+                      <Collapse in={expandedItemId === item.id}>
+                        {item.structure && (
+                          <Box sx={{ mt: 1 }}>
+                             <Typography variant="caption" color="text.secondary" display="block">{t('grammar.structure')}</Typography>
+                             <Typography variant="body2">{item.structure}</Typography>
+                          </Box>
+                        )}
+                        {item.context && (
+                          <Box sx={{ mt: 1 }}>
+                             <Typography variant="caption" color="text.secondary" display="block">{t('grammar.context')}</Typography>
+                             <Typography variant="body2">{item.context}</Typography>
+                          </Box>
+                        )}
+                         {item.examples && (
+                          <Box sx={{ mt: 1 }}>
+                             <Typography variant="caption" color="text.secondary" display="block">{t('grammar.examples')}</Typography>
+                             <Typography variant="body2" sx={{ whiteSpace: 'pre-wrap' }}>{item.examples}</Typography>
+                          </Box>
+                        )}
+                        {item.note && (
                           <Box sx={{ mt: 2, bgcolor: '#f5f5f5', p: 1, borderRadius: 1 }}>
-                            <Typography variant="caption" color="text.secondary" display="block">{t('vocabulary.note')}</Typography>
+                            <Typography variant="caption" color="text.secondary" display="block">{t('grammar.note')}</Typography>
                             <Typography variant="body2" sx={{ whiteSpace: 'pre-wrap' }}>
-                              {word.note}
+                              {item.note}
                             </Typography>
                           </Box>
                         )}
                         <Typography variant="caption" color="text.secondary" display="block" sx={{ mt: 1 }}>
-                           {t('vocabulary.addedDate')} {new Date(word.created_at).toLocaleDateString()}
+                           {t('grammar.addedDate')} {new Date(item.created_at).toLocaleDateString()}
                         </Typography>
                       </Collapse>
                     </CardContent>
                   </Card>
                 </Grid>
               ))}
-              {words.length === 0 && (
+              {items.length === 0 && (
                 <Box sx={{ p: 2, width: '100%', textAlign: 'center' }}>
-                  <Typography color="text.secondary">{t('vocabulary.noWords')}</Typography>
+                  <Typography color="text.secondary">{t('grammar.noItems')}</Typography>
                 </Box>
               )}
             </Grid>
@@ -310,19 +334,19 @@ export default function VocabularyPage(): React.JSX.Element {
 
       {/* Create Book Dialog */}
       <Dialog open={createBookOpen} onClose={() => setCreateBookOpen(false)}>
-        <DialogTitle>{t('vocabulary.createNewBookTitle')}</DialogTitle>
+        <DialogTitle>{t('grammar.createNewBookTitle')}</DialogTitle>
         <DialogContent>
           <TextField
             autoFocus
             margin="dense"
-            label={t('vocabulary.bookName')}
+            label={t('grammar.bookName')}
             fullWidth
             value={newBookName}
             onChange={(e) => setNewBookName(e.target.value)}
           />
           <TextField
             margin="dense"
-            label={t('vocabulary.description')}
+            label={t('grammar.description')}
             fullWidth
             value={newBookDesc}
             onChange={(e) => setNewBookDesc(e.target.value)}
@@ -334,31 +358,53 @@ export default function VocabularyPage(): React.JSX.Element {
         </DialogActions>
       </Dialog>
 
-      {/* Edit Word Dialog */}
-      <Dialog open={editWordOpen} onClose={() => setEditWordOpen(false)}>
-        <DialogTitle>{t('vocabulary.editWord')}</DialogTitle>
+      {/* Edit Item Dialog */}
+      <Dialog open={editItemOpen} onClose={() => setEditItemOpen(false)} maxWidth="md" fullWidth>
+        <DialogTitle>{t('grammar.editItem')}</DialogTitle>
         <DialogContent>
-          <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2, mt: 1, minWidth: '300px' }}>
+          <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2, mt: 1 }}>
             <TextField 
-              label={t('screenshot.word')} 
+              label={t('grammar.item')} 
               fullWidth 
-              value={editFormData.word} 
-              onChange={(e) => setEditFormData({...editFormData, word: e.target.value})} 
+              value={editFormData.grammar} 
+              onChange={(e) => setEditFormData({...editFormData, grammar: e.target.value})} 
             />
             <TextField 
-              label={t('screenshot.reading')} 
+              label={t('grammar.reading')} 
               fullWidth 
               value={editFormData.reading} 
               onChange={(e) => setEditFormData({...editFormData, reading: e.target.value})} 
             />
             <TextField 
-              label={t('screenshot.meaning')} 
+              label={t('grammar.structure')} 
+              fullWidth 
+              value={editFormData.structure} 
+              onChange={(e) => setEditFormData({...editFormData, structure: e.target.value})} 
+            />
+            <TextField 
+              label={t('grammar.meaning')} 
               fullWidth 
               value={editFormData.meaning} 
               onChange={(e) => setEditFormData({...editFormData, meaning: e.target.value})} 
             />
+             <TextField 
+              label={t('grammar.context')} 
+              fullWidth 
+              multiline
+              rows={2}
+              value={editFormData.context} 
+              onChange={(e) => setEditFormData({...editFormData, context: e.target.value})} 
+            />
+             <TextField 
+              label={t('grammar.examples')} 
+              fullWidth 
+              multiline
+              rows={3}
+              value={editFormData.examples} 
+              onChange={(e) => setEditFormData({...editFormData, examples: e.target.value})} 
+            />
             <TextField 
-              label={t('screenshot.note')} 
+              label={t('grammar.note')} 
               fullWidth 
               multiline 
               rows={2} 
@@ -368,37 +414,59 @@ export default function VocabularyPage(): React.JSX.Element {
           </Box>
         </DialogContent>
         <DialogActions>
-          <Button onClick={() => setEditWordOpen(false)}>{t('common.cancel')}</Button>
-          <Button onClick={handleSaveWord}>{t('common.save')}</Button>
+          <Button onClick={() => setEditItemOpen(false)}>{t('common.cancel')}</Button>
+          <Button onClick={handleSaveItem}>{t('common.save')}</Button>
         </DialogActions>
       </Dialog>
 
-      {/* Add Word Dialog */}
-      <Dialog open={addWordOpen} onClose={() => setAddWordOpen(false)}>
-        <DialogTitle>{t('vocabulary.addWord')}</DialogTitle>
+      {/* Add Item Dialog */}
+      <Dialog open={addItemOpen} onClose={() => setAddItemOpen(false)} maxWidth="md" fullWidth>
+        <DialogTitle>{t('grammar.addItem')}</DialogTitle>
         <DialogContent>
-          <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2, mt: 1, minWidth: '300px' }}>
-            <TextField 
-              label={t('screenshot.word')} 
+          <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2, mt: 1 }}>
+             <TextField 
+              label={t('grammar.item')} 
               fullWidth 
               autoFocus
-              value={addFormData.word} 
-              onChange={(e) => setAddFormData({...addFormData, word: e.target.value})} 
+              value={addFormData.grammar} 
+              onChange={(e) => setAddFormData({...addFormData, grammar: e.target.value})} 
             />
             <TextField 
-              label={t('screenshot.reading')} 
+              label={t('grammar.reading')} 
               fullWidth 
               value={addFormData.reading} 
               onChange={(e) => setAddFormData({...addFormData, reading: e.target.value})} 
             />
             <TextField 
-              label={t('screenshot.meaning')} 
+              label={t('grammar.structure')} 
+              fullWidth 
+              value={addFormData.structure} 
+              onChange={(e) => setAddFormData({...addFormData, structure: e.target.value})} 
+            />
+            <TextField 
+              label={t('grammar.meaning')} 
               fullWidth 
               value={addFormData.meaning} 
               onChange={(e) => setAddFormData({...addFormData, meaning: e.target.value})} 
             />
+             <TextField 
+              label={t('grammar.context')} 
+              fullWidth 
+              multiline
+              rows={2}
+              value={addFormData.context} 
+              onChange={(e) => setAddFormData({...addFormData, context: e.target.value})} 
+            />
+             <TextField 
+              label={t('grammar.examples')} 
+              fullWidth 
+              multiline
+              rows={3}
+              value={addFormData.examples} 
+              onChange={(e) => setAddFormData({...addFormData, examples: e.target.value})} 
+            />
             <TextField 
-              label={t('screenshot.note')} 
+              label={t('grammar.note')} 
               fullWidth 
               multiline 
               rows={2} 
@@ -408,8 +476,8 @@ export default function VocabularyPage(): React.JSX.Element {
           </Box>
         </DialogContent>
         <DialogActions>
-          <Button onClick={() => setAddWordOpen(false)}>{t('common.cancel')}</Button>
-          <Button onClick={handleSaveNewWord} disabled={!addFormData.word}>{t('common.add')}</Button>
+          <Button onClick={() => setAddItemOpen(false)}>{t('common.cancel')}</Button>
+          <Button onClick={handleSaveNewItem} disabled={!addFormData.grammar}>{t('common.add')}</Button>
         </DialogActions>
       </Dialog>
     </Box>

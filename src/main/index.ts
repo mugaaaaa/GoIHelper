@@ -139,6 +139,35 @@ app.whenReady().then(() => {
     return db?.deleteWord(id);
   });
 
+  // Grammar IPC Handlers
+  ipcMain.handle('get-grammar-books', () => {
+    return db?.getGrammarBooks() || [];
+  });
+
+  ipcMain.handle('create-grammar-book', (_, name: string, description?: string) => {
+    return db?.createGrammarBook(name, description);
+  });
+
+  ipcMain.handle('delete-grammar-book', (_, id: number) => {
+    return db?.deleteGrammarBook(id);
+  });
+
+  ipcMain.handle('get-grammar-items', (_, bookId: number) => {
+    return db?.getGrammarItems(bookId) || [];
+  });
+
+  ipcMain.handle('add-grammar-item', (_, bookId: number, grammar: string, reading?: string, structure?: string, meaning?: string, context?: string, examples?: string, note?: string) => {
+    return db?.addGrammarItem(bookId, grammar, reading, structure, meaning, context, examples, note);
+  });
+
+  ipcMain.handle('update-grammar-item', (_, id: number, grammar: string, reading?: string, structure?: string, meaning?: string, context?: string, examples?: string, note?: string) => {
+    return db?.updateGrammarItem(id, grammar, reading, structure, meaning, context, examples, note);
+  });
+
+  ipcMain.handle('delete-grammar-item', (_, id: number) => {
+    return db?.deleteGrammarItem(id);
+  });
+
   ipcMain.handle('set-proxy', async (_, port: string) => {
     currentProxyPort = port;
     if (win) {
@@ -183,6 +212,105 @@ app.whenReady().then(() => {
       return { text: response.data.choices[0].message.content, raw: response.data };
     } catch (error: any) {
       console.error('Qwen Analysis Failed (Main Process):', error.message);
+      if (error.response) {
+        console.error('Data:', JSON.stringify(error.response.data));
+        throw new Error(`API Error: ${error.response.status} - ${JSON.stringify(error.response.data)}`);
+      }
+      throw error;
+    }
+  });
+
+  ipcMain.handle('analyze-text-qwen', async (_, apiKey: string, model: string, prompt: string, text: string) => {
+    try {
+      const agent = currentProxyPort ? new HttpsProxyAgent(`http://127.0.0.1:${currentProxyPort}`) : undefined;
+      
+      let messages;
+      if (model.includes('vl')) {
+        messages = [
+          {
+            role: "system",
+            content: prompt
+          },
+          {
+            role: "user",
+            content: [
+              { type: "text", text: text }
+            ]
+          }
+        ];
+      } else {
+        messages = [
+          {
+            role: "system",
+            content: prompt
+          },
+          {
+            role: "user",
+            content: text
+          }
+        ];
+      }
+
+      const response = await axios.post(
+        'https://dashscope.aliyuncs.com/compatible-mode/v1/chat/completions',
+        {
+          model: model,
+          messages: messages
+        },
+        {
+          headers: {
+            'Authorization': `Bearer ${apiKey}`,
+            'Content-Type': 'application/json'
+          },
+          httpsAgent: agent,
+          proxy: false
+        }
+      );
+
+      return { text: response.data.choices[0].message.content, raw: response.data };
+    } catch (error: any) {
+      console.error('Qwen Text Analysis Failed (Main Process):', error.message);
+      if (error.response) {
+        console.error('Data:', JSON.stringify(error.response.data));
+        throw new Error(`API Error: ${error.response.status} - ${JSON.stringify(error.response.data)}`);
+      }
+      throw error;
+    }
+  });
+
+  ipcMain.handle('analyze-text-deepseek', async (_, apiKey: string, model: string, prompt: string, text: string) => {
+    try {
+      const agent = currentProxyPort ? new HttpsProxyAgent(`http://127.0.0.1:${currentProxyPort}`) : undefined;
+      
+      const response = await axios.post(
+        'https://api.deepseek.com/chat/completions',
+        {
+          model: model,
+          messages: [
+            {
+              role: "system",
+              content: prompt
+            },
+            {
+              role: "user",
+              content: text
+            }
+          ],
+          stream: false
+        },
+        {
+          headers: {
+            'Authorization': `Bearer ${apiKey}`,
+            'Content-Type': 'application/json'
+          },
+          httpsAgent: agent,
+          proxy: false
+        }
+      );
+
+      return { text: response.data.choices[0].message.content, raw: response.data };
+    } catch (error: any) {
+      console.error('DeepSeek Analysis Failed (Main Process):', error.message);
       if (error.response) {
         console.error('Data:', JSON.stringify(error.response.data));
         throw new Error(`API Error: ${error.response.status} - ${JSON.stringify(error.response.data)}`);

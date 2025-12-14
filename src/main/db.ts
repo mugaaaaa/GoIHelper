@@ -25,6 +25,26 @@ export interface VocabularyWord {
   created_at: string;
 }
 
+export interface GrammarBook {
+  id: number;
+  name: string;
+  description?: string;
+  created_at: string;
+}
+
+export interface GrammarItem {
+  id: number;
+  book_id: number;
+  grammar: string;
+  reading?: string;
+  structure?: string;
+  meaning?: string;
+  context?: string;
+  examples?: string;
+  note?: string;
+  created_at: string;
+}
+
 export class DBManager {
   private db: Database.Database;
 
@@ -59,6 +79,27 @@ export class DBManager {
         created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
         FOREIGN KEY (book_id) REFERENCES vocabulary_books(id) ON DELETE CASCADE
       );
+
+      CREATE TABLE IF NOT EXISTS grammar_books (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        name TEXT NOT NULL,
+        description TEXT,
+        created_at DATETIME DEFAULT CURRENT_TIMESTAMP
+      );
+
+      CREATE TABLE IF NOT EXISTS grammar (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        book_id INTEGER NOT NULL,
+        grammar TEXT NOT NULL,
+        reading TEXT,
+        structure TEXT,
+        meaning TEXT,
+        context TEXT,
+        examples TEXT,
+        note TEXT,
+        created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+        FOREIGN KEY (book_id) REFERENCES grammar_books(id) ON DELETE CASCADE
+      );
     `);
 
     // Migration: Check if 'context' column exists in 'vocabulary' and rename to 'note' if needed
@@ -90,6 +131,12 @@ export class DBManager {
     const bookCount = this.db.prepare('SELECT COUNT(*) as count FROM vocabulary_books').get() as { count: number };
     if (bookCount.count === 0) {
       this.createBook('Default Book', 'My first vocabulary book');
+    }
+
+    // Insert default grammar book if empty
+    const grammarBookCount = this.db.prepare('SELECT COUNT(*) as count FROM grammar_books').get() as { count: number };
+    if (grammarBookCount.count === 0) {
+      this.createGrammarBook('Default Grammar Book', 'My first grammar book');
     }
   }
 
@@ -147,6 +194,43 @@ export class DBManager {
 
   deleteWord(id: number): void {
     const stmt = this.db.prepare('DELETE FROM vocabulary WHERE id = ?');
+    stmt.run(id);
+  }
+
+  // Grammar Book Methods
+  getGrammarBooks(): GrammarBook[] {
+    return this.db.prepare('SELECT * FROM grammar_books ORDER BY created_at DESC').all() as GrammarBook[];
+  }
+
+  createGrammarBook(name: string, description?: string): number {
+    const stmt = this.db.prepare('INSERT INTO grammar_books (name, description) VALUES (?, ?)');
+    const info = stmt.run(name, description || null);
+    return info.lastInsertRowid as number;
+  }
+
+  deleteGrammarBook(id: number): void {
+    const stmt = this.db.prepare('DELETE FROM grammar_books WHERE id = ?');
+    stmt.run(id);
+  }
+
+  // Grammar Item Methods
+  getGrammarItems(bookId: number): GrammarItem[] {
+    return this.db.prepare('SELECT * FROM grammar WHERE book_id = ? ORDER BY created_at DESC').all(bookId) as GrammarItem[];
+  }
+
+  addGrammarItem(bookId: number, grammar: string, reading?: string, structure?: string, meaning?: string, context?: string, examples?: string, note?: string): number {
+    const stmt = this.db.prepare('INSERT INTO grammar (book_id, grammar, reading, structure, meaning, context, examples, note) VALUES (?, ?, ?, ?, ?, ?, ?, ?)');
+    const info = stmt.run(bookId, grammar, reading || null, structure || null, meaning || null, context || null, examples || null, note || null);
+    return info.lastInsertRowid as number;
+  }
+
+  updateGrammarItem(id: number, grammar: string, reading?: string, structure?: string, meaning?: string, context?: string, examples?: string, note?: string): void {
+    const stmt = this.db.prepare('UPDATE grammar SET grammar = ?, reading = ?, structure = ?, meaning = ?, context = ?, examples = ?, note = ? WHERE id = ?');
+    stmt.run(grammar, reading || null, structure || null, meaning || null, context || null, examples || null, note || null, id);
+  }
+
+  deleteGrammarItem(id: number): void {
+    const stmt = this.db.prepare('DELETE FROM grammar WHERE id = ?');
     stmt.run(id);
   }
 }

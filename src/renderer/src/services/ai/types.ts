@@ -5,4 +5,5 @@ export interface AIAnalysisResult {
 
 export interface AIService {
   analyzeImage(imageBase64: string, prompt?: string): Promise<AIAnalysisResult>;
+  analyzeText?(text: string, prompt?: string): Promise<AIAnalysisResult>;
 }

@@ -43,4 +43,28 @@ export class GeminiService implements AIService {
       throw error;
     }
   }
+
+  async analyzeText(textInput: string, prompt?: string): Promise<AIAnalysisResult> {
+    try {
+      const defaultPrompt = `
+        Please analyze this text. 
+        If it contains Japanese text, please:
+        1. Transcribe the Japanese text (if needed).
+        2. Provide a translation.
+        3. Break down the sentence structure and explain key vocabulary.
+      `;
+
+      const result = await this.model.generateContent([
+        prompt || defaultPrompt,
+        textInput
+      ]);
+      const response = await result.response;
+      const text = response.text();
+
+      return { text, raw: response };
+    } catch (error) {
+      console.error('Gemini Text Analysis Failed:', error);
+      throw error;
+    }
+  }
 }

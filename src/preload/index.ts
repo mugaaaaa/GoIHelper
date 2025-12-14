@@ -24,6 +24,26 @@ export interface VocabularyWord {
   created_at: string;
 }
 
+export interface GrammarBook {
+  id: number;
+  name: string;
+  description?: string;
+  created_at: string;
+}
+
+export interface GrammarItem {
+  id: number;
+  book_id: number;
+  grammar: string;
+  reading?: string;
+  structure?: string;
+  meaning?: string;
+  context?: string;
+  examples?: string;
+  note?: string;
+  created_at: string;
+}
+
 // Custom APIs for renderer
 const api = {
   getPrompts: () => ipcRenderer.invoke('get-prompts'),
@@ -39,8 +59,20 @@ const api = {
   addWord: (bookId: number, word: string, reading?: string, meaning?: string, note?: string) => ipcRenderer.invoke('add-word', bookId, word, reading, meaning, note),
   updateWord: (id: number, word: string, reading?: string, meaning?: string, note?: string) => ipcRenderer.invoke('update-word', id, word, reading, meaning, note),
   deleteWord: (id: number) => ipcRenderer.invoke('delete-word', id),
+  
+  // Grammar APIs
+  getGrammarBooks: () => ipcRenderer.invoke('get-grammar-books'),
+  createGrammarBook: (name: string, description?: string) => ipcRenderer.invoke('create-grammar-book', name, description),
+  deleteGrammarBook: (id: number) => ipcRenderer.invoke('delete-grammar-book', id),
+  getGrammarItems: (bookId: number) => ipcRenderer.invoke('get-grammar-items', bookId),
+  addGrammarItem: (bookId: number, grammar: string, reading?: string, structure?: string, meaning?: string, context?: string, examples?: string, note?: string) => ipcRenderer.invoke('add-grammar-item', bookId, grammar, reading, structure, meaning, context, examples, note),
+  updateGrammarItem: (id: number, grammar: string, reading?: string, structure?: string, meaning?: string, context?: string, examples?: string, note?: string) => ipcRenderer.invoke('update-grammar-item', id, grammar, reading, structure, meaning, context, examples, note),
+  deleteGrammarItem: (id: number) => ipcRenderer.invoke('delete-grammar-item', id),
+
   setProxy: (port: string) => ipcRenderer.invoke('set-proxy', port),
   analyzeImageQwen: (apiKey: string, model: string, prompt: string, imageBase64: string) => ipcRenderer.invoke('analyze-image-qwen', apiKey, model, prompt, imageBase64),
+  analyzeTextQwen: (apiKey: string, model: string, prompt: string, text: string) => ipcRenderer.invoke('analyze-text-qwen', apiKey, model, prompt, text),
+  analyzeTextDeepSeek: (apiKey: string, model: string, prompt: string, text: string) => ipcRenderer.invoke('analyze-text-deepseek', apiKey, model, prompt, text),
   setGlobalShortcut: (shortcut: string) => ipcRenderer.invoke('set-global-shortcut', shortcut),
   onAutoAnalyzeScreenshot: (callback: (image: string) => void) => {
     const listener = (_event: any, image: string) => callback(image);
