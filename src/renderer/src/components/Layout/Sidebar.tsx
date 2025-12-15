@@ -27,8 +27,8 @@ export default function Sidebar(): React.JSX.Element {
   const { t } = useTranslation()
 
   const MENU_ITEMS = [
-    { text: t('sidebar.screenshot'), icon: <CameraIcon />, path: '/screenshot' },
     { text: t('sidebar.textAnalysis'), icon: <TextFieldsIcon />, path: '/text-analysis' },
+    { text: t('sidebar.screenshot'), icon: <CameraIcon />, path: '/screenshot' },
     { text: t('sidebar.vocabulary'), icon: <MenuBookIcon />, path: '/vocabulary' },
     { text: t('sidebar.grammar'), icon: <AutoStoriesIcon />, path: '/grammar' },
     { text: t('sidebar.prompts'), icon: <DescriptionIcon />, path: '/prompts' },

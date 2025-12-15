@@ -73,9 +73,9 @@ function App(): React.JSX.Element {
           <GlobalEventHandler />
           <MainLayout>
             <Routes>
-              <Route path="/" element={<Navigate to="/screenshot" replace />} />
-              <Route path="/screenshot" element={<ScreenshotPage />} />
+              <Route path="/" element={<Navigate to="/text-analysis" replace />} />
               <Route path="/text-analysis" element={<TextAnalysisPage />} />
+              <Route path="/screenshot" element={<ScreenshotPage />} />
               <Route path="/vocabulary" element={<VocabularyPage />} />
               <Route path="/grammar" element={<GrammarPage />} />
               <Route path="/prompts" element={<PromptPage />} />

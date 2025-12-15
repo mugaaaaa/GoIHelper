@@ -126,7 +126,7 @@ export class DBManager {
         3. Break down the sentence structure and explain key vocabulary.
       `.trim());
 
-      this.addPrompt('日语分析 (详细)', `
+      this.addPrompt('日语分析', `
         请担任我的日语学习助手。仔细分析图片中的日语文本：
         1. 提供地道、准确的中文翻译。
         2. 逐句解析句子结构，特别是复杂的从句或修饰关系。

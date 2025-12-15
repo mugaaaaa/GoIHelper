@@ -46,6 +46,7 @@ export interface GrammarItem {
 
 // Custom APIs for renderer
 const api = {
+  // Prompt APIs
   getPrompts: () => ipcRenderer.invoke('get-prompts'),
   addPrompt: (name: string, content: string) => ipcRenderer.invoke('add-prompt', name, content),
   updatePrompt: (id: number, name: string, content: string) => ipcRenderer.invoke('update-prompt', id, name, content),
@@ -69,6 +70,7 @@ const api = {
   updateGrammarItem: (id: number, grammar: string, reading?: string, structure?: string, meaning?: string, context?: string, examples?: string, note?: string) => ipcRenderer.invoke('update-grammar-item', id, grammar, reading, structure, meaning, context, examples, note),
   deleteGrammarItem: (id: number) => ipcRenderer.invoke('delete-grammar-item', id),
 
+  // Proxy APIs
   setProxy: (port: string) => ipcRenderer.invoke('set-proxy', port),
   analyzeImageQwen: (apiKey: string, model: string, prompt: string, imageBase64: string) => ipcRenderer.invoke('analyze-image-qwen', apiKey, model, prompt, imageBase64),
   analyzeTextQwen: (apiKey: string, model: string, prompt: string, text: string) => ipcRenderer.invoke('analyze-text-qwen', apiKey, model, prompt, text),
@@ -81,9 +83,6 @@ const api = {
   }
 }
 
-// Use `contextBridge` APIs to expose Electron APIs to
-// renderer only if context isolation is enabled, otherwise
-// just add to the DOM global.
 if (process.contextIsolated) {
   try {
     contextBridge.exposeInMainWorld('electron', electronAPI)

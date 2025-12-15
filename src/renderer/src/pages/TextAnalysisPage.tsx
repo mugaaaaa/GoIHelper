@@ -21,7 +21,7 @@ const VOCAB_INSTRUCTION = `
 然后输出如下内容作为分隔符
 
 ---GRAMMAR-JSON-START---
-请以JSON数组格式输出提取的语法点 (Grammar Items):
+请以JSON数组格式输出提取的语法点:
 [
   {
     "grammar": "语法点 (e.g. ～ようとしている)",
@@ -35,7 +35,7 @@ const VOCAB_INSTRUCTION = `
 ]
 
 ---VOCAB-JSON-START---
-请以JSON数组格式输出提取的生词 (Vocabulary Words):
+请以JSON数组格式输出提取的生词:
 [
   {
     "word": "单词 (e.g. 呟く)",
