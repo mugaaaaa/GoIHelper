@@ -1,10 +1,11 @@
-# goihelper
+[English](README.md) | [日本語](README.ja.md) | [简体中文](README.zh-CN.md)
 
-An Electron application with React and TypeScript for Japanese language learning.
+---
 
-## Recommended IDE Setup
+# GoIHelper
 
-- [VSCode](https://code.visualstudio.com/) + [ESLint](https://marketplace.visualstudio.com/items?itemName=dbaeumer.vscode-eslint) + [Prettier](https://marketplace.visualstudio.com/items?itemName=esbenp.prettier-vscode)
+A small Japanese language learning tool built with `React`, `TypeScript`, and `Electron`.
+`GoI` stands for `語彙 (goi)` in Japanese, meaning `vocabulary`.
 
 ## Project Setup
 
@@ -14,7 +15,7 @@ An Electron application with React and TypeScript for Japanese language learning
 $ npm install
 ```
 
-### Development
+### Development Mode
 
 ```bash
 $ npm run dev
@@ -23,7 +24,7 @@ $ npm run dev
 ### Build
 
 ```bash
-# For windows
+# For Windows
 $ npm run build:win
 
 # For macOS
@@ -32,4 +33,3 @@ $ npm run build:mac
 # For Linux
 $ npm run build:linux
 ```
-# GoIHelper
