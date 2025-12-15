@@ -168,6 +168,31 @@ app.whenReady().then(() => {
     return db?.deleteGrammarItem(id);
   });
 
+  // Analysis History IPC Handlers
+  ipcMain.handle('get-analysis-sets', (_, type: 'image' | 'text') => {
+    return db?.getAnalysisSets(type) || [];
+  });
+
+  ipcMain.handle('create-analysis-set', (_, name: string, type: 'image' | 'text') => {
+    return db?.createAnalysisSet(name, type);
+  });
+
+  ipcMain.handle('delete-analysis-set', (_, id: number) => {
+    return db?.deleteAnalysisSet(id);
+  });
+
+  ipcMain.handle('get-analysis-records', (_, setId: number) => {
+    return db?.getAnalysisRecords(setId) || [];
+  });
+
+  ipcMain.handle('add-analysis-record', (_, setId: number, title: string, originalContent: string, aiResult: string) => {
+    return db?.addAnalysisRecord(setId, title, originalContent, aiResult);
+  });
+
+  ipcMain.handle('delete-analysis-record', (_, id: number) => {
+    return db?.deleteAnalysisRecord(id);
+  });
+
   ipcMain.handle('set-proxy', async (_, port: string) => {
     currentProxyPort = port;
     if (win) {

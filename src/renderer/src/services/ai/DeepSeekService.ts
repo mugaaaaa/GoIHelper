@@ -16,11 +16,36 @@ export class DeepSeekService implements AIService {
   async analyzeText(text: string, prompt?: string): Promise<AIAnalysisResult> {
     try {
       const defaultPrompt = `
-        Please analyze this text. 
-        If it contains Japanese text, please:
-        1. Transcribe the Japanese text (if needed).
-        2. Provide a translation.
-        3. Break down the sentence structure and explain key vocabulary.
+        请翻译并分析这段文本
+        然后输出如下内容作为分隔符:
+
+        ---GRAMMAR-JSON-START---
+
+        请以JSON数组格式输出提取的语法点 (Grammar Items):
+        [
+          {
+            "grammar": "语法点 (e.g. ～ようとしている)",
+            "reading": "读音 (e.g. ～ようとしている)",
+            "structure": "接续/结构 (e.g. 动词意志形 + としている)",
+            "meaning": "意义 (e.g. 表示正试图做某事...)",
+            "context": "上下文分析 (e.g. 这里表示...)",
+            "examples": "例句 (e.g. 必死に...)",
+            "note": "笔记 (Optional)"
+          }
+        ]
+
+        然后输出如下内容作为分隔符:
+
+        ---VOCAB-JSON-START---
+        请以JSON数组格式输出提取的生词 (Vocabulary Words):
+        [
+          {
+            "word": "单词 (e.g. 呟く)",
+            "reading": "读音 (e.g. つぶやく)",
+            "meaning": "意义 (e.g. 一个人喃喃自语...)",
+            "note": "笔记/例句 (e.g. 自らの事情を...)"
+          }
+        ]
       `;
 
       const promptText = prompt || defaultPrompt;

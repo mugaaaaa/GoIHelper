@@ -45,6 +45,22 @@ export interface GrammarItem {
   created_at: string;
 }
 
+export interface AnalysisSet {
+  id: number;
+  name: string;
+  type: 'image' | 'text';
+  created_at: string;
+}
+
+export interface AnalysisRecord {
+  id: number;
+  set_id: number;
+  title: string;
+  original_content: string;
+  ai_result: string;
+  created_at: string;
+}
+
 export class DBManager {
   private db: Database.Database;
 
@@ -100,7 +116,36 @@ export class DBManager {
         created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
         FOREIGN KEY (book_id) REFERENCES grammar_books(id) ON DELETE CASCADE
       );
+
+      CREATE TABLE IF NOT EXISTS analysis_sets (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        name TEXT NOT NULL,
+        type TEXT CHECK(type IN ('image', 'text')) NOT NULL, 
+        created_at DATETIME DEFAULT CURRENT_TIMESTAMP
+      );
+
+      CREATE TABLE IF NOT EXISTS analysis_records (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        set_id INTEGER NOT NULL,
+        title TEXT DEFAULT 'New Record',
+        original_content TEXT NOT NULL, 
+        ai_result TEXT,
+        created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+        FOREIGN KEY (set_id) REFERENCES analysis_sets(id) ON DELETE CASCADE
+      );
     `);
+
+    // Migration: Check if 'title' column exists in 'analysis_records'
+    try {
+      const tableInfo = this.db.pragma('table_info(analysis_records)') as { name: string }[];
+      const hasTitle = tableInfo.some(col => col.name === 'title');
+
+      if (!hasTitle) {
+        this.db.exec("ALTER TABLE analysis_records ADD COLUMN title TEXT DEFAULT 'New Record'");
+      }
+    } catch (error) {
+      console.error('Migration failed:', error);
+    }
 
     // Migration: Check if 'context' column exists in 'vocabulary' and rename to 'note' if needed
     try {
@@ -181,6 +226,38 @@ export class DBManager {
 
   deleteBook(id: number): void {
     const stmt = this.db.prepare('DELETE FROM vocabulary_books WHERE id = ?');
+    stmt.run(id);
+  }
+
+  // Analysis Set Methods
+  getAnalysisSets(type: 'image' | 'text'): AnalysisSet[] {
+    return this.db.prepare('SELECT * FROM analysis_sets WHERE type = ? ORDER BY created_at DESC').all(type) as AnalysisSet[];
+  }
+
+  createAnalysisSet(name: string, type: 'image' | 'text'): number {
+    const stmt = this.db.prepare('INSERT INTO analysis_sets (name, type) VALUES (?, ?)');
+    const info = stmt.run(name, type);
+    return info.lastInsertRowid as number;
+  }
+
+  deleteAnalysisSet(id: number): void {
+    const stmt = this.db.prepare('DELETE FROM analysis_sets WHERE id = ?');
+    stmt.run(id);
+  }
+
+  // Analysis Record Methods
+  getAnalysisRecords(setId: number): AnalysisRecord[] {
+    return this.db.prepare('SELECT * FROM analysis_records WHERE set_id = ? ORDER BY created_at DESC').all(setId) as AnalysisRecord[];
+  }
+
+  addAnalysisRecord(setId: number, title: string, originalContent: string, aiResult: string): number {
+    const stmt = this.db.prepare('INSERT INTO analysis_records (set_id, title, original_content, ai_result) VALUES (?, ?, ?, ?)');
+    const info = stmt.run(setId, title, originalContent, aiResult);
+    return info.lastInsertRowid as number;
+  }
+
+  deleteAnalysisRecord(id: number): void {
+    const stmt = this.db.prepare('DELETE FROM analysis_records WHERE id = ?');
     stmt.run(id);
   }
 

@@ -3,6 +3,8 @@
     "screenshot": "スクリーンショット",
     "aianalysis": "AI解析",
     "textAnalysis": "テキスト解析",
+    "placeholder": "ここにテキストを貼り付けて解析...",
+    "history": "履歴",
     "vocabulary": "単語帳",
     "prompts": "プロンプト",
     "settings": "設定",
@@ -79,5 +81,33 @@
   "about": {
     "title": "アバウト",
     "description": "これは GoIHelper アプリケーションです。"
+  },
+  "history": {
+    "imageAnalysis": "画像解析セット",
+    "textAnalysis": "テキスト解析セット",
+    "noImageSets": "画像解析セットがありません",
+    "noTextSets": "テキスト解析セットがありません",
+    "selectOrCreate": "セットを選択または作成して記録を表示",
+    "noRecords": "このセットには記録がありません。",
+    "originalInput": "元の内容",
+    "analysisResult": "解析結果",
+    "createImageSet": "新しい画像解析セットを作成",
+    "createTextSet": "新しいテキスト解析セットを作成",
+    "setName": "セット名",
+    "addImageRecord": "画像解析記録を追加",
+    "addTextRecord": "テキスト解析記録を追加",
+    "enterImageUrl": "画像URLまたはデータURI（Base64）を入力",
+    "imageUrlLabel": "画像URL / Base64",
+    "originalTextLabel": "原文",
+    "aiResultLabel": "AI解析結果 (Markdown対応)",
+    "deleteSetConfirm": "このセットを削除してもよろしいですか？",
+    "deleteRecordConfirm": "この記録を削除してもよろしいですか？",
+    "recordTitle": "記録タイトル",
+    "viewDetails": "詳細を見る",
+    "exportMarkdown": "Markdownをエクスポート",
+    "recordDetails": "記録詳細",
+    "saveToHistory": "履歴に保存",
+    "selectHistorySet": "履歴セットを選択",
+    "recordSaved": "記録が保存されました！"
   }
 }

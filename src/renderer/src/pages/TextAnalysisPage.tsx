@@ -9,9 +9,10 @@ import { GeminiService } from '../services/ai/GeminiService'
 import { QwenService } from '../services/ai/QwenService'
 import { DeepSeekService } from '../services/ai/DeepSeekService'
 import ReactMarkdown from 'react-markdown'
-import { Prompt, VocabularyBook, GrammarBook } from '../../../preload/index'
+import { Prompt, VocabularyBook, GrammarBook, AnalysisSet } from '../../../preload/index'
 import { useTranslation } from 'react-i18next'
 import { DetectedWord, DetectedGrammar } from '../context/ScreenshotContext' // Reusing type
+import SaveIcon from '@mui/icons-material/Save'
 
 const VOCAB_INSTRUCTION = `
 
@@ -94,6 +95,12 @@ export default function TextAnalysisPage(): React.JSX.Element {
   const [grammarBooks, setGrammarBooks] = useState<GrammarBook[]>([]);
   const [defaultBookId, setDefaultBookId] = useState<number | ''>('');
   const [defaultGrammarBookId, setDefaultGrammarBookId] = useState<number | ''>('');
+  
+  // History Set State
+  const [historySets, setHistorySets] = useState<AnalysisSet[]>([]);
+  const [selectedHistorySetId, setSelectedHistorySetId] = useState<number | ''>('');
+  const [saveHistoryOpen, setSaveHistoryOpen] = useState(false);
+  const [saveHistoryTitle, setSaveHistoryTitle] = useState('');
 
   // Manual Add Dialog State
   const [manualDialogOpen, setManualDialogOpen] = useState(false);
@@ -113,6 +120,13 @@ export default function TextAnalysisPage(): React.JSX.Element {
   //   localStorage.setItem('selected_text_model', selectedModel);
   // }, [selectedModel]);
 
+  // Save selectedPromptId to localStorage
+  useEffect(() => {
+    if (selectedPromptId) {
+      localStorage.setItem('text_analysis_prompt_id', String(selectedPromptId));
+    }
+  }, [selectedPromptId]);
+
   useEffect(() => {
     const initData = async () => {
       try {
@@ -128,20 +142,31 @@ export default function TextAnalysisPage(): React.JSX.Element {
         const storedModel = localStorage.getItem('selected_text_model');
         if (storedModel) setSelectedModel(storedModel);
 
-        const [promptsData, booksData, grammarBooksData] = await Promise.all([
+        const [promptsData, booksData, grammarBooksData, historySetsData] = await Promise.all([
           window.api.getPrompts(),
           window.api.getBooks(),
-          window.api.getGrammarBooks()
+          window.api.getGrammarBooks(),
+          window.api.getAnalysisSets('text')
         ]);
         
         setPrompts(promptsData);
-        if (promptsData.length > 0) setSelectedPromptId(promptsData[0].id);
+        
+        // Load cached prompt ID or default to first
+        const cachedPromptId = localStorage.getItem('text_analysis_prompt_id');
+        if (cachedPromptId && promptsData.some(p => p.id === Number(cachedPromptId))) {
+          setSelectedPromptId(Number(cachedPromptId));
+        } else if (promptsData.length > 0) {
+          setSelectedPromptId(promptsData[0].id);
+        }
 
         setVocabBooks(booksData);
         if (booksData.length > 0) setDefaultBookId(booksData[0].id);
 
         setGrammarBooks(grammarBooksData);
         if (grammarBooksData.length > 0) setDefaultGrammarBookId(grammarBooksData[0].id);
+
+        setHistorySets(historySetsData);
+        if (historySetsData.length > 0) setSelectedHistorySetId(historySetsData[0].id);
 
       } catch (error) {
         console.error('Failed to fetch initial data:', error);
@@ -343,6 +368,25 @@ export default function TextAnalysisPage(): React.JSX.Element {
     }
   }
 
+  const handleSaveToHistory = async () => {
+    if (!selectedHistorySetId || !analysis) return;
+    try {
+      const title = saveHistoryTitle || `Text Analysis - ${new Date().toLocaleString()}`;
+      await window.api.addAnalysisRecord(
+        selectedHistorySetId as number, 
+        title,
+        textInput, 
+        analysis
+      );
+      setSaveHistoryOpen(false);
+      setSaveHistoryTitle('');
+      alert(t('history.recordSaved'));
+    } catch (e) {
+      console.error(e);
+      setError(t('screenshot.errorSaveFailed'));
+    }
+  };
+
   return (
     <Box sx={{ p: 2, height: '100%', overflow: 'hidden', display: 'flex', flexDirection: 'column', gap: 2 }}>
       
@@ -392,7 +436,7 @@ export default function TextAnalysisPage(): React.JSX.Element {
           <TextField
               multiline
               fullWidth
-              placeholder="Paste text here to analyze..."
+              placeholder={t('textAnalysis.placeholder')}
               value={textInput}
               onChange={(e) => setTextInput(e.target.value)}
               onContextMenu={handleContextMenu}
@@ -418,7 +462,29 @@ export default function TextAnalysisPage(): React.JSX.Element {
             <Paper elevation={3} sx={{ p: 2, position: 'relative' }}>
               <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 2 }}>
                 <Typography variant="h6">{t('screenshot.analysisResult')}</Typography>
-                <Button variant="outlined" size="small" onClick={() => navigator.clipboard.writeText(analysis)}>{t('screenshot.copyMarkdown')}</Button>
+                <Box sx={{ display: 'flex', gap: 1 }}>
+                  <FormControl size="small" sx={{ minWidth: 150 }}>
+                    <InputLabel id="history-set-select-label">{t('history.selectHistorySet')}</InputLabel>
+                    <Select
+                      labelId="history-set-select-label"
+                      value={selectedHistorySetId}
+                      label={t('history.selectHistorySet')}
+                      onChange={(e) => setSelectedHistorySetId(Number(e.target.value))}
+                    >
+                      {historySets.map((set) => <MenuItem key={set.id} value={set.id}>{set.name}</MenuItem>)}
+                    </Select>
+                  </FormControl>
+                  <Button 
+                    variant="outlined" 
+                    size="small" 
+                    startIcon={<SaveIcon />}
+                    onClick={() => setSaveHistoryOpen(true)}
+                    disabled={!selectedHistorySetId}
+                  >
+                    {t('history.saveToHistory')}
+                  </Button>
+                  <Button variant="outlined" size="small" onClick={() => navigator.clipboard.writeText(analysis)}>{t('screenshot.copyMarkdown')}</Button>
+                </Box>
               </Box>
               <Box 
                 onContextMenu={handleContextMenu}
@@ -543,6 +609,27 @@ export default function TextAnalysisPage(): React.JSX.Element {
           )}
         </Box>
       </Box>
+
+      {/* Save History Dialog */}
+      <Dialog open={saveHistoryOpen} onClose={() => setSaveHistoryOpen(false)}>
+        <DialogTitle>{t('history.saveToHistory')}</DialogTitle>
+        <DialogContent>
+          <TextField
+            autoFocus
+            margin="dense"
+            label={t('history.recordTitle')}
+            fullWidth
+            variant="outlined"
+            value={saveHistoryTitle}
+            onChange={(e) => setSaveHistoryTitle(e.target.value)}
+            placeholder={`Text Analysis - ${new Date().toLocaleString()}`}
+          />
+        </DialogContent>
+        <DialogActions>
+          <Button onClick={() => setSaveHistoryOpen(false)}>{t('common.cancel')}</Button>
+          <Button onClick={handleSaveToHistory} variant="contained">{t('common.save')}</Button>
+        </DialogActions>
+      </Dialog>
 
       {/* Manual Add Dialog */}
       <Dialog open={manualDialogOpen} onClose={() => setManualDialogOpen(false)}>

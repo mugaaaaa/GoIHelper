@@ -4,6 +4,8 @@
     "aianalysis": "AI analysis",
     "grammar": "Grammar Book",
     "textAnalysis": "Text Analysis",
+    "placeholder": "Paste text here to analyze...",
+    "history": "History",
     "vocabulary": "Vocabulary",
     "prompts": "Prompts",
     "settings": "Settings",
@@ -99,5 +101,33 @@
   "about": {
     "title": "About",
     "description": "This is the GoIHelper application."
+  },
+  "history": {
+    "imageAnalysis": "Image Analysis",
+    "textAnalysis": "Text Analysis",
+    "noImageSets": "No Image Sets",
+    "noTextSets": "No Text Sets",
+    "selectOrCreate": "Select or create a set to view records",
+    "noRecords": "No records in this set.",
+    "originalInput": "Original Input",
+    "analysisResult": "Analysis Result",
+    "createImageSet": "Create New Image Set",
+    "createTextSet": "Create New Text Set",
+    "setName": "Set Name",
+    "addImageRecord": "Add Image Record",
+    "addTextRecord": "Add Text Record",
+    "enterImageUrl": "Enter Image URL or Data URI (Base64)",
+    "imageUrlLabel": "Image URL / Base64",
+    "originalTextLabel": "Original Text",
+    "aiResultLabel": "AI Analysis Result (Markdown supported)",
+    "deleteSetConfirm": "Are you sure you want to delete this set?",
+    "deleteRecordConfirm": "Are you sure you want to delete this record?",
+    "recordTitle": "Record Title",
+    "viewDetails": "View Details",
+    "exportMarkdown": "Export Markdown",
+    "recordDetails": "Record Details",
+    "saveToHistory": "Save to History",
+    "selectHistorySet": "Select History Set",
+    "recordSaved": "Record saved successfully!"
   }
 }

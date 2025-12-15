@@ -43,6 +43,22 @@ export interface GrammarItem {
   created_at: string;
 }
 
+export interface AnalysisSet {
+  id: number;
+  name: string;
+  type: 'image' | 'text';
+  created_at: string;
+}
+
+export interface AnalysisRecord {
+  id: number;
+  set_id: number;
+  title: string;
+  original_content: string;
+  ai_result: string;
+  created_at: string;
+}
+
 declare global {
   interface Window {
     electron: ElectronAPI
@@ -67,6 +83,13 @@ declare global {
       addGrammarItem: (bookId: number, grammar: string, reading?: string, structure?: string, meaning?: string, context?: string, examples?: string, note?: string) => Promise<number>
       updateGrammarItem: (id: number, grammar: string, reading?: string, structure?: string, meaning?: string, context?: string, examples?: string, note?: string) => Promise<void>
       deleteGrammarItem: (id: number) => Promise<void>
+
+      getAnalysisSets: (type: 'image' | 'text') => Promise<AnalysisSet[]>
+      createAnalysisSet: (name: string, type: 'image' | 'text') => Promise<number>
+      deleteAnalysisSet: (id: number) => Promise<void>
+      getAnalysisRecords: (setId: number) => Promise<AnalysisRecord[]>
+      addAnalysisRecord: (setId: number, title: string, originalContent: string, aiResult: string) => Promise<number>
+      deleteAnalysisRecord: (id: number) => Promise<void>
 
       setProxy: (port: string) => Promise<void>
       analyzeImageQwen: (apiKey: string, model: string, prompt: string, imageBase64: string) => Promise<{ text: string, raw: any }>

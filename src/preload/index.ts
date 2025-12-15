@@ -44,6 +44,22 @@ export interface GrammarItem {
   created_at: string;
 }
 
+export interface AnalysisSet {
+  id: number;
+  name: string;
+  type: 'image' | 'text';
+  created_at: string;
+}
+
+export interface AnalysisRecord {
+  id: number;
+  set_id: number;
+  title: string;
+  original_content: string;
+  ai_result: string;
+  created_at: string;
+}
+
 // Custom APIs for renderer
 const api = {
   // Prompt APIs
@@ -69,6 +85,14 @@ const api = {
   addGrammarItem: (bookId: number, grammar: string, reading?: string, structure?: string, meaning?: string, context?: string, examples?: string, note?: string) => ipcRenderer.invoke('add-grammar-item', bookId, grammar, reading, structure, meaning, context, examples, note),
   updateGrammarItem: (id: number, grammar: string, reading?: string, structure?: string, meaning?: string, context?: string, examples?: string, note?: string) => ipcRenderer.invoke('update-grammar-item', id, grammar, reading, structure, meaning, context, examples, note),
   deleteGrammarItem: (id: number) => ipcRenderer.invoke('delete-grammar-item', id),
+
+  // Analysis History APIs
+  getAnalysisSets: (type: 'image' | 'text') => ipcRenderer.invoke('get-analysis-sets', type),
+  createAnalysisSet: (name: string, type: 'image' | 'text') => ipcRenderer.invoke('create-analysis-set', name, type),
+  deleteAnalysisSet: (id: number) => ipcRenderer.invoke('delete-analysis-set', id),
+  getAnalysisRecords: (setId: number) => ipcRenderer.invoke('get-analysis-records', setId),
+  addAnalysisRecord: (setId: number, title: string, originalContent: string, aiResult: string) => ipcRenderer.invoke('add-analysis-record', setId, title, originalContent, aiResult),
+  deleteAnalysisRecord: (id: number) => ipcRenderer.invoke('delete-analysis-record', id),
 
   // Proxy APIs
   setProxy: (port: string) => ipcRenderer.invoke('set-proxy', port),

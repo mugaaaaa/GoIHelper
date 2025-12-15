@@ -9,6 +9,7 @@ import VocabularyPage from './pages/VocabularyPage'
 import GrammarPage from './pages/GrammarPage'
 import SettingsPage from './pages/SettingsPage'
 import TextAnalysisPage from './pages/TextAnalysisPage'
+import AnalysisHistoryPage from './pages/AnalysisHistoryPage'
 import { ScreenshotProvider, useScreenshot } from './context/ScreenshotContext'
 
 const theme = createTheme({
@@ -76,6 +77,7 @@ function App(): React.JSX.Element {
               <Route path="/" element={<Navigate to="/text-analysis" replace />} />
               <Route path="/text-analysis" element={<TextAnalysisPage />} />
               <Route path="/screenshot" element={<ScreenshotPage />} />
+              <Route path="/history" element={<AnalysisHistoryPage />} />
               <Route path="/vocabulary" element={<VocabularyPage />} />
               <Route path="/grammar" element={<GrammarPage />} />
               <Route path="/prompts" element={<PromptPage />} />

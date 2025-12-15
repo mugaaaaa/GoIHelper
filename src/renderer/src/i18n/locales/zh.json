@@ -3,6 +3,8 @@
     "screenshot": "屏幕截图",
     "aianalysis": "AI解析",
     "textAnalysis": "文本解析",
+    "placeholder": "在此处粘贴文本进行分析...",
+    "history": "历史记录",
     "vocabulary": "生词本",
     "prompts": "提示词",
     "settings": "设置",
@@ -106,6 +108,34 @@
   },
   "about": {
     "title": "关于",
-    "description": "这是 GoIHelper 应用程序。"
+    "description": "这是一个 GoIHelper 应用程序。"
+  },
+  "history": {
+    "imageAnalysis": "图片解析集",
+    "textAnalysis": "文本解析集",
+    "noImageSets": "暂无图片解析集",
+    "noTextSets": "暂无文本解析集",
+    "selectOrCreate": "选择或创建一个解析集以查看记录",
+    "noRecords": "此解析集中暂无记录。",
+    "originalInput": "原始内容",
+    "analysisResult": "解析结果",
+    "createImageSet": "创建新图片解析集",
+    "createTextSet": "创建新文本解析集",
+    "setName": "解析集名称",
+    "addImageRecord": "添加图片解析记录",
+    "addTextRecord": "添加文本解析记录",
+    "enterImageUrl": "输入图片 URL 或 Data URI (Base64)",
+    "imageUrlLabel": "图片 URL / Base64",
+    "originalTextLabel": "原文",
+    "aiResultLabel": "AI 解析结果 (支持 Markdown)",
+    "deleteSetConfirm": "确定要删除此解析集吗？",
+    "deleteRecordConfirm": "确定要删除此记录吗？",
+    "recordTitle": "记录标题",
+    "viewDetails": "查看详情",
+    "exportMarkdown": "导出 Markdown",
+    "recordDetails": "记录详情",
+    "saveToHistory": "保存到历史记录",
+    "selectHistorySet": "选择历史记录集",
+    "recordSaved": "记录保存成功！"
   }
 }

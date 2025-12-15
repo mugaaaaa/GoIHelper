@@ -10,8 +10,9 @@ import { QwenService } from '../services/ai/QwenService'
 
 import { useScreenshot, DetectedWord, DetectedGrammar } from '../context/ScreenshotContext'
 import ReactMarkdown from 'react-markdown'
-import { Prompt, VocabularyBook, GrammarBook } from '../../../preload/index'
+import { Prompt, VocabularyBook, GrammarBook, AnalysisSet } from '../../../preload/index'
 import { useTranslation } from 'react-i18next'
+import SaveIcon from '@mui/icons-material/Save'
 
 const VOCAB_INSTRUCTION = `
 
@@ -66,6 +67,12 @@ export default function ScreenshotPage(): React.JSX.Element {
   const [defaultBookId, setDefaultBookId] = useState<number | ''>('');
   const [defaultGrammarBookId, setDefaultGrammarBookId] = useState<number | ''>('');
 
+  // History Set State
+  const [historySets, setHistorySets] = useState<AnalysisSet[]>([]);
+  const [selectedHistorySetId, setSelectedHistorySetId] = useState<number | ''>('');
+  const [saveHistoryOpen, setSaveHistoryOpen] = useState(false);
+  const [saveHistoryTitle, setSaveHistoryTitle] = useState('');
+
   // Manual Add Dialog State
   const [manualDialogOpen, setManualDialogOpen] = useState(false);
   const [manualData, setManualData] = useState({ 
@@ -91,6 +98,13 @@ export default function ScreenshotPage(): React.JSX.Element {
     }
   }, [location.state, image, prompts, apiKey, qwenKey, selectedModel]);
 
+  // Save selectedPromptId to localStorage
+  useEffect(() => {
+    if (selectedPromptId) {
+      localStorage.setItem('screenshot_prompt_id', String(selectedPromptId));
+    }
+  }, [selectedPromptId]);
+
   useEffect(() => {
     const initData = async () => {
       try {
@@ -103,20 +117,31 @@ export default function ScreenshotPage(): React.JSX.Element {
         const storedModel = localStorage.getItem('selected_image_model');
         if (storedModel) setSelectedModel(storedModel);
 
-        const [promptsData, booksData, grammarBooksData] = await Promise.all([
+        const [promptsData, booksData, grammarBooksData, historySetsData] = await Promise.all([
           window.api.getPrompts(),
           window.api.getBooks(),
-          window.api.getGrammarBooks()
+          window.api.getGrammarBooks(),
+          window.api.getAnalysisSets('image')
         ]);
         
         setPrompts(promptsData);
-        if (promptsData.length > 0) setSelectedPromptId(promptsData[0].id);
+        
+        // Load cached prompt ID or default to first
+        const cachedPromptId = localStorage.getItem('screenshot_prompt_id');
+        if (cachedPromptId && promptsData.some(p => p.id === Number(cachedPromptId))) {
+          setSelectedPromptId(Number(cachedPromptId));
+        } else if (promptsData.length > 0) {
+          setSelectedPromptId(promptsData[0].id);
+        }
 
         setVocabBooks(booksData);
         if (booksData.length > 0) setDefaultBookId(booksData[0].id);
 
         setGrammarBooks(grammarBooksData);
         if (grammarBooksData.length > 0) setDefaultGrammarBookId(grammarBooksData[0].id);
+
+        setHistorySets(historySetsData);
+        if (historySetsData.length > 0) setSelectedHistorySetId(historySetsData[0].id);
 
       } catch (error) {
         console.error('Failed to fetch initial data:', error);
@@ -308,6 +333,24 @@ export default function ScreenshotPage(): React.JSX.Element {
     }
   }
 
+  const handleSaveToHistory = async () => {
+    if (!selectedHistorySetId || !analysis) return;
+    try {
+      const title = saveHistoryTitle || `Image Analysis - ${new Date().toLocaleString()}`;
+      await window.api.addAnalysisRecord(
+        selectedHistorySetId as number, 
+        title,
+        image || '', 
+        analysis
+      );
+      setSaveHistoryOpen(false);
+      setSaveHistoryTitle('');
+      alert(t('history.recordSaved'));
+    } catch (e) {
+      console.error(e);
+      setError(t('screenshot.errorSaveFailed'));
+    }
+  };
 
   return (
     <Box sx={{ p: 2, height: '100%', overflow: 'auto', display: 'flex', flexDirection: 'column', gap: 2 }}>
@@ -343,22 +386,44 @@ export default function ScreenshotPage(): React.JSX.Element {
       </Box>
 
       {/* Analysis Result */}
-      {analysis && (
-        <Paper elevation={3} sx={{ p: 2, mt: 2, position: 'relative' }}>
-          <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 2 }}>
-            <Typography variant="h6">{t('screenshot.analysisResult')}</Typography>
-            <Button variant="outlined" size="small" onClick={() => navigator.clipboard.writeText(analysis)}>{t('screenshot.copyMarkdown')}</Button>
-          </Box>
-          <Box 
-            onContextMenu={handleContextMenu}
-            sx={{ '& img': { maxWidth: '100%' }, cursor: 'text' }}
-          > 
-             <ReactMarkdown>{analysis}</ReactMarkdown>
-          </Box>
-        </Paper>
-      )}
+          {analysis && (
+            <Paper elevation={3} sx={{ p: 2, position: 'relative' }}>
+              <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 2 }}>
+                <Typography variant="h6">{t('screenshot.analysisResult')}</Typography>
+                <Box sx={{ display: 'flex', gap: 1 }}>
+                  <FormControl size="small" sx={{ minWidth: 150 }}>
+                    <InputLabel id="history-set-select-label">{t('history.selectHistorySet')}</InputLabel>
+                    <Select
+                      labelId="history-set-select-label"
+                      value={selectedHistorySetId}
+                      label={t('history.selectHistorySet')}
+                      onChange={(e) => setSelectedHistorySetId(Number(e.target.value))}
+                    >
+                      {historySets.map((set) => <MenuItem key={set.id} value={set.id}>{set.name}</MenuItem>)}
+                    </Select>
+                  </FormControl>
+                  <Button 
+                    variant="outlined" 
+                    size="small" 
+                    startIcon={<SaveIcon />}
+                    onClick={() => setSaveHistoryOpen(true)}
+                    disabled={!selectedHistorySetId}
+                  >
+                    {t('history.saveToHistory')}
+                  </Button>
+                  <Button variant="outlined" size="small" onClick={() => navigator.clipboard.writeText(analysis)}>{t('screenshot.copyMarkdown')}</Button>
+                </Box>
+              </Box>
+              <Box 
+                onContextMenu={handleContextMenu}
+                sx={{ '& img': { maxWidth: '100%' }, cursor: 'text' }}
+              > 
+                 <ReactMarkdown>{analysis}</ReactMarkdown>
+              </Box>
+            </Paper>
+          )}
 
-      {/* Detected Grammar */}
+          {/* Detected Grammar */}
       {detectedGrammar.length > 0 && (
         <Box sx={{ mt: 2 }}>
           <Typography variant="h6" gutterBottom>{t('grammar.item')}</Typography>
@@ -470,6 +535,27 @@ export default function ScreenshotPage(): React.JSX.Element {
           </Grid>
         </Box>
       )}
+
+      {/* Save History Dialog */}
+      <Dialog open={saveHistoryOpen} onClose={() => setSaveHistoryOpen(false)}>
+        <DialogTitle>{t('history.saveToHistory')}</DialogTitle>
+        <DialogContent>
+          <TextField
+            autoFocus
+            margin="dense"
+            label={t('history.recordTitle')}
+            fullWidth
+            variant="outlined"
+            value={saveHistoryTitle}
+            onChange={(e) => setSaveHistoryTitle(e.target.value)}
+            placeholder={`Image Analysis - ${new Date().toLocaleString()}`}
+          />
+        </DialogContent>
+        <DialogActions>
+          <Button onClick={() => setSaveHistoryOpen(false)}>{t('common.cancel')}</Button>
+          <Button onClick={handleSaveToHistory} variant="contained">{t('common.save')}</Button>
+        </DialogActions>
+      </Dialog>
 
       {/* Manual Add Dialog */}
       <Dialog open={manualDialogOpen} onClose={() => setManualDialogOpen(false)}>

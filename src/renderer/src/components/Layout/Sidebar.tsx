@@ -19,6 +19,7 @@ import MenuBookIcon from '@mui/icons-material/MenuBook'
 import DescriptionIcon from '@mui/icons-material/Description'
 import TextFieldsIcon from '@mui/icons-material/TextFields'
 import AutoStoriesIcon from '@mui/icons-material/AutoStories'
+import HistoryIcon from '@mui/icons-material/History'
 
 const DRAW_WIDTH = 160
 
@@ -29,6 +30,7 @@ export default function Sidebar(): React.JSX.Element {
   const MENU_ITEMS = [
     { text: t('sidebar.textAnalysis'), icon: <TextFieldsIcon />, path: '/text-analysis' },
     { text: t('sidebar.screenshot'), icon: <CameraIcon />, path: '/screenshot' },
+    { text: t('sidebar.history'), icon: <HistoryIcon />, path: '/history' },
     { text: t('sidebar.vocabulary'), icon: <MenuBookIcon />, path: '/vocabulary' },
     { text: t('sidebar.grammar'), icon: <AutoStoriesIcon />, path: '/grammar' },
     { text: t('sidebar.prompts'), icon: <DescriptionIcon />, path: '/prompts' },
