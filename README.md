@@ -1,6 +1,6 @@
 # goihelper
 
-An Electron application with React and TypeScript
+An Electron application with React and TypeScript for Japanese language learning.
 
 ## Recommended IDE Setup
 
