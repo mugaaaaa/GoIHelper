@@ -163,20 +163,40 @@ export class DBManager {
     // Insert default prompt if empty
     const count = this.db.prepare('SELECT COUNT(*) as count FROM prompts').get() as { count: number };
     if (count.count === 0) {
-      this.addPrompt('Default Japanese Analysis', `
-        Please analyze this image. 
-        If it contains Japanese text, please:
-        1. Transcribe the Japanese text.
-        2. Provide a translation.
-        3. Break down the sentence structure and explain key vocabulary.
-      `.trim());
+      this.addPrompt('翻译并分析', `
+        先请翻译这段文本并简要分析
 
-      this.addPrompt('日语分析', `
-        请担任我的日语学习助手。仔细分析图片中的日语文本：
-        1. 提供地道、准确的中文翻译。
-        2. 逐句解析句子结构，特别是复杂的从句或修饰关系。
-        3. 解释关键的语法点和词汇在上下文中的具体用法和细微差别。
-        4. 指出任何体现日本文化或特定语境的表达方式。
+        然后输出如下内容作为分隔符:
+        ---GRAMMAR-JSON-START---
+
+        请以JSON数组格式输出提取的语法点:
+        [
+          {
+            "grammar": "语法点 (e.g. ～ようとしている)",
+            "reading": "读音 (e.g. ～ようとしている)",
+            "structure": "接续/结构 (e.g. 动词意志形 + としている)",
+            "meaning": "意义 (e.g. 表示正试图做某事...)",
+            "context": "上下文分析 (e.g. 这里表示...)",
+            "examples": "例句 (e.g. 必死に...)",
+            "note": "笔记 (Optional)"
+          }
+        ]
+        太简单的语法点不要记录, 应当在 N3 以上才记录.
+
+        然后输出如下内容作为分隔符:
+        ---VOCAB-JSON-START---
+
+        请以JSON数组格式输出提取的生词:
+        [
+          {
+            "word": "单词 (e.g. 呟く)",
+            "reading": "读音 (e.g. つぶやく)",
+            "meaning": "意义 (e.g. 一个人喃喃自语...)",
+            "note": "笔记/例句 (e.g. 自らの事情を...)"
+          }
+        ]
+        太简单的词汇不要记录, 应当在 N3 以上才记录.
+        明显有奇幻作品色彩的不要记, 要多现实中有用的的词.
       `.trim());
     }
 
