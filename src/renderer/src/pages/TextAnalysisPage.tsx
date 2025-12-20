@@ -14,38 +14,40 @@ import { useTranslation } from 'react-i18next'
 import { DetectedWord, DetectedGrammar } from '../context/ScreenshotContext' // Reusing type
 import SaveIcon from '@mui/icons-material/Save'
 
-const VOCAB_INSTRUCTION = `
+const VOCAB_INSTRUCTION = ''
 
----
-**INSTRUCTION FOR AI:**
-请翻译并分析这段文本
-然后输出如下内容作为分隔符
+// const VOCAB_INSTRUCTION = `
 
----GRAMMAR-JSON-START---
-请以JSON数组格式输出提取的语法点:
-[
-  {
-    "grammar": "语法点 (e.g. ～ようとしている)",
-    "reading": "读音 (e.g. ～ようとしている)",
-    "structure": "接续/结构 (e.g. 动词意志形 + としている)",
-    "meaning": "意义 (e.g. 表示正试图做某事...)",
-    "context": "上下文分析 (e.g. 这里表示...)",
-    "examples": "例句 (e.g. 必死に...)",
-    "note": "笔记 (Optional)"
-  }
-]
+// ---
+// **INSTRUCTION FOR AI:**
+// 请翻译并分析这段文本
+// 然后输出如下内容作为分隔符
 
----VOCAB-JSON-START---
-请以JSON数组格式输出提取的生词:
-[
-  {
-    "word": "单词 (e.g. 呟く)",
-    "reading": "读音 (e.g. つぶやく)",
-    "meaning": "意义 (e.g. 一个人喃喃自语...)",
-    "note": "笔记/例句 (e.g. 自らの事情を...)"
-  }
-]
-`;
+// ---GRAMMAR-JSON-START---
+// 请以JSON数组格式输出提取的语法点:
+// [
+//   {
+//     "grammar": "语法点 (e.g. ～ようとしている)",
+//     "reading": "读音 (e.g. ～ようとしている)",
+//     "structure": "接续/结构 (e.g. 动词意志形 + としている)",
+//     "meaning": "意义 (e.g. 表示正试图做某事...)",
+//     "context": "上下文分析 (e.g. 这里表示...)",
+//     "examples": "例句 (e.g. 必死に...)",
+//     "note": "笔记 (Optional)"
+//   }
+// ]
+
+// ---VOCAB-JSON-START---
+// 请以JSON数组格式输出提取的生词:
+// [
+//   {
+//     "word": "单词 (e.g. 呟く)",
+//     "reading": "读音 (e.g. つぶやく)",
+//     "meaning": "意义 (e.g. 一个人喃喃自语...)",
+//     "note": "笔记/例句 (e.g. 自らの事情を...)"
+//   }
+// ]
+// `;
 
 
 export default function TextAnalysisPage(): React.JSX.Element {

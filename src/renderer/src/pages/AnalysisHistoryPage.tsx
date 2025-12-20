@@ -2,18 +2,16 @@ import React, { useEffect, useState } from 'react';
 import { 
   Box, Typography, List, ListItem, ListItemButton, ListItemText, 
   IconButton, Button, Dialog, TextField, DialogTitle, DialogContent, DialogActions,
-  Card, CardContent, Grid, Divider, Paper, Collapse
+  Paper
 } from '@mui/material';
 import DeleteIcon from '@mui/icons-material/Delete';
 import AddIcon from '@mui/icons-material/Add';
 import ExpandMoreIcon from '@mui/icons-material/ExpandMore';
-import ExpandLessIcon from '@mui/icons-material/ExpandLess';
 import ZoomInIcon from '@mui/icons-material/ZoomIn';
 import ZoomOutIcon from '@mui/icons-material/ZoomOut';
 import ImageIcon from '@mui/icons-material/Image';
 import TextFieldsIcon from '@mui/icons-material/TextFields';
 import DownloadIcon from '@mui/icons-material/Download';
-import VisibilityIcon from '@mui/icons-material/Visibility';
 import { AnalysisSet, AnalysisRecord } from '../../../preload/index';
 import ReactMarkdown from 'react-markdown';
 import { useTranslation } from 'react-i18next';
@@ -454,8 +452,8 @@ export default function AnalysisHistoryPage(): React.JSX.Element {
         </DialogTitle>
         <DialogContent dividers>
           {selectedRecord && (
-            <Grid container spacing={2} sx={{ height: '100%' }}>
-              <Grid item xs={12} md={6} sx={{ height: '100%', display: 'flex', flexDirection: 'column' }}>
+            <Box sx={{ display: 'flex', flexDirection: { xs: 'column', md: 'row' }, gap: 2, height: '100%' }}>
+              <Box sx={{ flex: 1, display: 'flex', flexDirection: 'column', minWidth: 0 }}>
                 <Typography variant="subtitle2" gutterBottom>{t('history.originalInput')}</Typography>
                 {selectedSetType === 'image' ? (
                   <ImageViewer src={selectedRecord.original_content} />
@@ -466,15 +464,15 @@ export default function AnalysisHistoryPage(): React.JSX.Element {
                     </Typography>
                   </Paper>
                 )}
-              </Grid>
+              </Box>
               
-              <Grid item xs={12} md={6} sx={{ height: '100%', display: 'flex', flexDirection: 'column' }}>
+              <Box sx={{ flex: 1, display: 'flex', flexDirection: 'column', minWidth: 0 }}>
                 <Typography variant="subtitle2" gutterBottom>{t('history.analysisResult')}</Typography>
                 <Paper variant="outlined" sx={{ p: 2, flex: 1, overflow: 'auto' }}>
                   <ReactMarkdown>{selectedRecord.ai_result}</ReactMarkdown>
                 </Paper>
-              </Grid>
-            </Grid>
+              </Box>
+            </Box>
           )}
         </DialogContent>
         <DialogActions>
